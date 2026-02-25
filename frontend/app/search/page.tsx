@@ -1,66 +1,101 @@
-export default function SearchPage() {
-    return (
-        <div className="space-y-6 max-w-5xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold mb-2">ナレッジ検索</h1>
-        <p className="text-gray-600">過去の確定済みControl（回答）を検索します。</p>
-      </div>
+// frontend/app/search/page.tsx
+import Link from "next/link";
 
-      {/* 検索ボックス */}
-      <div className="flex gap-2">
-        <input 
-          type="text" 
-          placeholder="検索キーワードを入力 (例: 多要素認証, MFA, AWS)" 
-          className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+// APIが返すJSONの型定義
+type SearchResult = {
+  id: string;
+  title: string;
+  category: string;
+  tags: string[];
+  matchSnippet: string;
+  updatedAt: string;
+};
+
+
+export default async function SearchPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  // URLの ?q=xxx からキーワードを取得
+  const { q } = await searchParams;
+  const query = q || "";
+
+  // APIから検索結果を取得 (キーワードがある時だけ検索する)
+  let data = { query: "", total: 0, items: [] as SearchResult[] };
+  
+  if (query) {
+    const res = await fetch(`http://localhost:3000/api/search?q=${encodeURIComponent(query)}`, {
+      cache: "no-store",
+    });
+    data = await res.json();
+  }
+
+  return (
+    <div className="space-y-6 max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold text-gray-900">ナレッジ検索</h1>
+
+      {/* 検索フォーム */}
+      <form method="GET" action="/search" className="flex gap-2">
+        <input
+          type="text"
+          name="q"
+          defaultValue={query}
+          placeholder="キーワードを入力 (例: 認証, MFA)"
+          className="flex-1 border border-gray-300 rounded-lg px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
         />
-        <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+        <button type="submit" className="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 shadow-sm transition-colors">
           検索
         </button>
-      </div>
+      </form>
 
-      {/* 検索結果（モックデータ） */}
-      <div className="space-y-4 mt-8">
-        <h2 className="text-lg font-semibold border-b pb-2">検索結果: 2件</h2>
+      {/* 検索結果エリア */}
+      {query && (
+        <div className="mt-8">
+          <p className="text-gray-600 mb-4 font-medium">
+            「{query}」の検索結果: {data.total} 件
+          </p>
 
-        {/* 結果カード 1 */}
-        <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:border-blue-300 transition-colors">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-lg font-bold text-blue-700">BASE-0001: 多要素認証の実施</h3>
-            <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">v5</span>
-          </div>
-          <div className="text-sm text-gray-500 mb-3 space-x-2">
-            <span>カテゴリ: Access Control</span>
-            <span>|</span>
-            <span>タグ: MFA, 認証, 2FA</span>
-          </div>
-          <div className="bg-gray-50 p-3 rounded text-sm">
-            <span className="font-semibold text-gray-700 block mb-1">確定済み回答:</span>
-            <p className="text-gray-800">
-              はい。特権アカウントを含むすべてのユーザーアカウントに対し、MFAを必須としています。認証にはTOTP（RFC 6238）準拠のアプリを使用し、SMSによる認証は廃止しています。
-            </p>
-          </div>
+          {data.items.length > 0 ? (
+            <div className="space-y-4">
+              {data.items.map((item) => (
+                // カード全体をリンクにして、詳細画面へ飛べるようにする
+                <Link href={`/controls/${item.id}`} key={item.id} className="block bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:border-blue-400 hover:shadow-md transition-all group">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-xs font-bold bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                        {item.id}
+                      </span>
+                      <h2 className="text-lg font-bold text-blue-700 group-hover:underline">{item.title}</h2>
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      更新: {new Date(item.updatedAt).toLocaleDateString('ja-JP')}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+                    {item.matchSnippet}
+                  </p>
+                  <div className="flex gap-2 text-xs font-medium">
+                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200">
+                      {item.category}
+                    </span>
+                    {item.tags.map(tag => (
+                      <span key={tag} className="bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-gray-50 border border-gray-200 p-8 rounded-lg text-center">
+              <p className="text-gray-500">一致するナレッジが見つかりませんでした。</p>
+              <p className="text-sm text-gray-400 mt-2">別のキーワード（例: 認証）でお試しください。</p>
+            </div>
+          )}
         </div>
-
-        {/* 結果カード 2 */}
-        <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:border-blue-300 transition-colors">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-lg font-bold text-blue-700">BASE-0128: ゼロトラストアクセス制御</h3>
-            <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">v1</span>
-          </div>
-          <div className="text-sm text-gray-500 mb-3 space-x-2">
-            <span>カテゴリ: Network Security</span>
-            <span>|</span>
-            <span>タグ: ゼロトラスト, VPN</span>
-          </div>
-          <div className="bg-gray-50 p-3 rounded text-sm">
-            <span className="font-semibold text-gray-700 block mb-1">確定済み回答:</span>
-            <p className="text-gray-800">
-              社内システムへのアクセスは、原則としてデバイス証明書とユーザー認証を組み合わせたゼロトラストネットワークアクセス（ZTNA）を経由して行われます。
-            </p>
-          </div>
-        </div>
-
-      </div>
+      )}
     </div>
-    );
+  );
 }

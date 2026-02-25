@@ -1,102 +1,94 @@
-export default function UnmatchedPage(){
+// frontend/app/unmatched/page.tsx
+import Link from "next/link";
+
+// APIが返すJSONの型定義
+type UnmatchedTask = {
+  id: string;
+  sourceFile: string;
+  rowNumber: number;
+  originalQuestion: string;
+  suggestedControl: {
+    id: string;
+    title: string;
+    matchScore: number;
+  } | null;
+  status: string;
+};
+
+export default async function UnmatchedPage() {
+  // APIから未マッチタスクのリストを取得
+  const res = await fetch('http://localhost:3000/api/unmatched', {
+    cache: "no-store",
+  });
+  const tasks: UnmatchedTask[] = await res.json();
+
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex justify-between items-end border-b pb-4">
-        <div>
-          <h1 className="text-2xl font-bold mb-2">未マッチ管理（手動マッピング）</h1>
-          <p className="text-gray-600">CSVから取り込まれた質問のうち、Controlと紐付いていないタスク一覧です。</p>
-        </div>
-        <div className="text-sm font-medium bg-red-50 text-red-600 px-4 py-2 rounded-lg border border-red-200">
-          残りタスク: 23件
-        </div>
+    <div className="space-y-6 max-w-5xl mx-auto">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">未マッチ管理 (要対応タスク)</h1>
+        <p className="text-gray-600 text-sm">
+          取り込んだCSVの中で、既存のナレッジと自動で紐付かなかった質問のリストです。手動でマッピングするか、新しいナレッジとして登録してください。
+        </p>
       </div>
 
-      {/* タスクリスト（モックデータ） */}
-      <div className="space-y-6 mt-6">
-        
-        {/* 未マッチタスク 1 */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-300 overflow-hidden">
-          {/* 質問セクション */}
-          <div className="bg-slate-50 p-4 border-b border-gray-200">
-            <div className="flex justify-between mb-2">
-              <span className="text-xs font-bold bg-slate-200 text-slate-700 px-2 py-1 rounded">A社_セキュリティチェックシート.csv</span>
-              <span className="text-xs text-gray-500">行番号: 12</span>
-            </div>
-            <h3 className="text-lg font-bold text-gray-800">
-              Q. クラウド環境における特権IDへのアクセスに対し、どのような認証方式を採用していますか？
-            </h3>
-          </div>
-
-          {/* マッピング候補セクション */}
-          <div className="p-4">
-            <h4 className="text-sm font-semibold text-gray-500 mb-3">検索サジェスト候補</h4>
-            <div className="space-y-3">
-              {/* 候補1 */}
-              <div className="flex items-center justify-between border border-blue-100 bg-blue-50 p-3 rounded hover:border-blue-300 transition-colors">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-bold text-blue-800">BASE-0001: 多要素認証の実施</span>
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">スコア: 高</span>
-                  </div>
-                  <p className="text-xs text-gray-600 truncate">
-                    回答: 特権アカウントを含むすべてのユーザーアカウントに対し、MFAを必須としています...
-                  </p>
-                </div>
-                <button className="ml-4 bg-blue-600 text-white text-sm px-4 py-2 rounded hover:bg-blue-700">
-                  このControlを紐付ける
-                </button>
-              </div>
-
-              {/* 候補2 */}
-              <div className="flex items-center justify-between border border-gray-100 bg-gray-50 p-3 rounded hover:border-gray-300 transition-colors">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-bold text-gray-700">BASE-0045: クラウド基盤のアクセス制御</span>
-                    <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">スコア: 中</span>
-                  </div>
-                  <p className="text-xs text-gray-600 truncate">
-                    回答: AWS等のクラウド基盤へのアクセスは、IP制限とIAMロールによる最小権限...
-                  </p>
-                </div>
-                <button className="ml-4 bg-white border border-gray-300 text-gray-700 text-sm px-4 py-2 rounded hover:bg-gray-100">
-                  このControlを紐付ける
-                </button>
-              </div>
-            </div>
-
-            {/* 新規作成ボタン */}
-            <div className="mt-4 text-right">
-              <button className="text-sm text-blue-600 hover:underline">
-                + 該当なし（新しいControlとして登録する）
-              </button>
-            </div>
-          </div>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+          <span className="font-bold text-gray-700">残りタスク: {tasks.length} 件</span>
         </div>
 
-        {/* 未マッチタスク 2 (簡略版) */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-300 overflow-hidden">
-          <div className="bg-slate-50 p-4 border-b border-gray-200">
-            <div className="flex justify-between mb-2">
-              <span className="text-xs font-bold bg-slate-200 text-slate-700 px-2 py-1 rounded">B社_委託先監査.csv</span>
-              <span className="text-xs text-gray-500">行番号: 45</span>
-            </div>
-            <h3 className="text-lg font-bold text-gray-800">
-              Q. 退職者のアカウントは、退職後何日以内に削除または無効化されますか？
-            </h3>
-          </div>
-          <div className="p-4 flex justify-between items-center">
-             <span className="text-sm text-gray-500">サジェスト候補が見つかりません。検索して探すか、新規作成してください。</span>
-             <div className="flex gap-2">
-               <button className="bg-white border border-gray-300 text-gray-700 text-sm px-4 py-2 rounded hover:bg-gray-100">
-                 検索する
-               </button>
-               <button className="bg-blue-600 text-white text-sm px-4 py-2 rounded hover:bg-blue-700">
-                 新規Control作成
-               </button>
-             </div>
-          </div>
-        </div>
+        <ul className="divide-y divide-gray-200">
+          {tasks.map((task) => (
+            <li key={task.id} className="p-6 hover:bg-gray-50 transition-colors">
+              <div className="flex flex-col md:flex-row gap-6">
+                
+                {/* 左側：元の質問情報 */}
+                <div className="flex-1 space-y-3">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span className="bg-yellow-100 text-yellow-800 font-bold px-2 py-1 rounded">
+                      {task.id}
+                    </span>
+                    <span>ファイル: {task.sourceFile} (行: {task.rowNumber})</span>
+                  </div>
+                  <div className="bg-gray-100 p-3 rounded border border-gray-200 text-gray-800 font-medium">
+                    {task.originalQuestion}
+                  </div>
+                </div>
 
+                {/* 右側：サジェストとアクション */}
+                <div className="flex-1 flex flex-col justify-center space-y-3 border-t md:border-t-0 md:border-l border-gray-200 pt-4 md:pt-0 md:pl-6">
+                  {task.suggestedControl ? (
+                    <div>
+                      <p className="text-xs font-bold text-gray-500 mb-1">AIのサジェスト候補 (類似度: {task.suggestedControl.matchScore}%)</p>
+                      <Link href={`/controls/${task.suggestedControl.id}`} className="block bg-blue-50 border border-blue-100 p-2 rounded text-sm text-blue-700 hover:underline mb-2">
+                        {task.suggestedControl.id} : {task.suggestedControl.title}
+                      </Link>
+                      <div className="flex gap-2">
+                        <button className="flex-1 bg-white border border-blue-600 text-blue-600 text-sm font-bold py-1.5 rounded hover:bg-blue-50">
+                          これに紐付ける
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-xs font-bold text-gray-500 mb-1">サジェスト候補</p>
+                      <p className="text-sm text-gray-500 italic mb-3">類似するナレッジが見つかりませんでした。</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-2">
+                    <button className="flex-1 bg-gray-800 text-white text-sm font-bold py-1.5 rounded hover:bg-gray-700">
+                      新規Control作成
+                    </button>
+                    <button className="flex-1 bg-white border border-gray-300 text-gray-700 text-sm font-bold py-1.5 rounded hover:bg-gray-50">
+                      手動検索
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
