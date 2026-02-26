@@ -12,21 +12,53 @@ import (
 )
 
 const searchControls = `-- name: SearchControls :many
-SELECT id, title, category, question, answer, status, version, created_at, updated_at FROM controls
-WHERE (title || ' ' || question || ' ' || answer) ILIKE '%' || $1 || '%'
-ORDER BY updated_at DESC
+
+SELECT 
+    c.id, 
+    c.title, 
+    c.category, 
+    c.question, 
+    c.answer, 
+    c.status, 
+    c.version, 
+    c.created_at, 
+    c.updated_at,
+    -- ここで tags を配列として取得し、名前を tags にする
+    COALESCE(array_agg(t.name) FILTER (WHERE t.name IS NOT NULL), '{}')::varchar[] AS tags
+FROM controls c
+LEFT JOIN control_tags ct ON c.id = ct.control_id
+LEFT JOIN tags t ON ct.tag_id = t.id
+WHERE 
+    (c.title ILIKE '%' || $1 || '%' OR 
+     c.question ILIKE '%' || $1 || '%' OR 
+     c.answer ILIKE '%' || $1 || '%')
+GROUP BY c.id
 `
 
+type SearchControlsRow struct {
+	ID        string             `json:"id"`
+	Title     string             `json:"title"`
+	Category  string             `json:"category"`
+	Question  string             `json:"question"`
+	Answer    string             `json:"answer"`
+	Status    string             `json:"status"`
+	Version   int32              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	Tags      []string           `json:"tags"`
+}
+
 // 指定されたキーワード（$1）が、タイトル・質問・回答のどこかに含まれる Control を検索します
-func (q *Queries) SearchControls(ctx context.Context, dollar_1 pgtype.Text) ([]Control, error) {
+// db/query/search.sql
+func (q *Queries) SearchControls(ctx context.Context, dollar_1 pgtype.Text) ([]SearchControlsRow, error) {
 	rows, err := q.db.Query(ctx, searchControls, dollar_1)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Control
+	var items []SearchControlsRow
 	for rows.Next() {
-		var i Control
+		var i SearchControlsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Title,
@@ -37,6 +69,7 @@ func (q *Queries) SearchControls(ctx context.Context, dollar_1 pgtype.Text) ([]C
 			&i.Version,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Tags,
 		); err != nil {
 			return nil, err
 		}

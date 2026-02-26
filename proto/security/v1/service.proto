@@ -40,7 +40,7 @@ message Control {
   string answer = 4;
   string category = 5;
   repeated string tags = 6;
-  int32 version = 7;
+  string version = 7;
   string updated_by = 8;
   google.protobuf.Timestamp updated_at = 9;
   string status = 10;
@@ -112,7 +112,7 @@ message SearchControlsRequest {
   string query = 1;
 }
 message SearchControlsResponse {
-  repeated Control controls = 1;
+  repeated Control hits = 1;
 }
 
 message ListUnmatchedTasksRequest {}

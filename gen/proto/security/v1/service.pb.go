@@ -31,7 +31,7 @@ type Control struct {
 	Answer        string                 `protobuf:"bytes,4,opt,name=answer,proto3" json:"answer,omitempty"`
 	Category      string                 `protobuf:"bytes,5,opt,name=category,proto3" json:"category,omitempty"`
 	Tags          []string               `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
-	Version       int32                  `protobuf:"varint,7,opt,name=version,proto3" json:"version,omitempty"`
+	Version       string                 `protobuf:"bytes,7,opt,name=version,proto3" json:"version,omitempty"`
 	UpdatedBy     string                 `protobuf:"bytes,8,opt,name=updated_by,json=updatedBy,proto3" json:"updated_by,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	Status        string                 `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
@@ -111,11 +111,11 @@ func (x *Control) GetTags() []string {
 	return nil
 }
 
-func (x *Control) GetVersion() int32 {
+func (x *Control) GetVersion() string {
 	if x != nil {
 		return x.Version
 	}
-	return 0
+	return ""
 }
 
 func (x *Control) GetUpdatedBy() string {
@@ -825,7 +825,7 @@ func (x *SearchControlsRequest) GetQuery() string {
 
 type SearchControlsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Controls      []*Control             `protobuf:"bytes,1,rep,name=controls,proto3" json:"controls,omitempty"`
+	Hits          []*Control             `protobuf:"bytes,1,rep,name=hits,proto3" json:"hits,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -860,9 +860,9 @@ func (*SearchControlsResponse) Descriptor() ([]byte, []int) {
 	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *SearchControlsResponse) GetControls() []*Control {
+func (x *SearchControlsResponse) GetHits() []*Control {
 	if x != nil {
-		return x.Controls
+		return x.Hits
 	}
 	return nil
 }
@@ -1039,7 +1039,7 @@ const file_proto_security_v1_service_proto_rawDesc = "" +
 	"\x06answer\x18\x04 \x01(\tR\x06answer\x12\x1a\n" +
 	"\bcategory\x18\x05 \x01(\tR\bcategory\x12\x12\n" +
 	"\x04tags\x18\x06 \x03(\tR\x04tags\x12\x18\n" +
-	"\aversion\x18\a \x01(\x05R\aversion\x12\x1d\n" +
+	"\aversion\x18\a \x01(\tR\aversion\x12\x1d\n" +
 	"\n" +
 	"updated_by\x18\b \x01(\tR\tupdatedBy\x129\n" +
 	"\n" +
@@ -1097,9 +1097,9 @@ const file_proto_security_v1_service_proto_rawDesc = "" +
 	"\x15CreateControlResponse\x12.\n" +
 	"\acontrol\x18\x01 \x01(\v2\x14.security.v1.ControlR\acontrol\"-\n" +
 	"\x15SearchControlsRequest\x12\x14\n" +
-	"\x05query\x18\x01 \x01(\tR\x05query\"J\n" +
-	"\x16SearchControlsResponse\x120\n" +
-	"\bcontrols\x18\x01 \x03(\v2\x14.security.v1.ControlR\bcontrols\"\x1b\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\"B\n" +
+	"\x16SearchControlsResponse\x12(\n" +
+	"\x04hits\x18\x01 \x03(\v2\x14.security.v1.ControlR\x04hits\"\x1b\n" +
 	"\x19ListUnmatchedTasksRequest\"N\n" +
 	"\x1aListUnmatchedTasksResponse\x120\n" +
 	"\x05tasks\x18\x01 \x03(\v2\x1a.security.v1.UnmatchedTaskR\x05tasks\"\x17\n" +
@@ -1159,7 +1159,7 @@ var file_proto_security_v1_service_proto_depIdxs = []int32{
 	0,  // 5: security.v1.GetControlResponse.control:type_name -> security.v1.Control
 	1,  // 6: security.v1.GetControlResponse.history:type_name -> security.v1.ControlVersion
 	0,  // 7: security.v1.CreateControlResponse.control:type_name -> security.v1.Control
-	0,  // 8: security.v1.SearchControlsResponse.controls:type_name -> security.v1.Control
+	0,  // 8: security.v1.SearchControlsResponse.hits:type_name -> security.v1.Control
 	2,  // 9: security.v1.ListUnmatchedTasksResponse.tasks:type_name -> security.v1.UnmatchedTask
 	3,  // 10: security.v1.ListFeedEventsResponse.events:type_name -> security.v1.FeedEvent
 	4,  // 11: security.v1.SecurityService.Ping:input_type -> security.v1.PingRequest

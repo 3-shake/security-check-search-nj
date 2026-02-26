@@ -10,6 +10,7 @@ import (
 
 	"github.com/asuka-sakamoto/security-system/backend/db"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"cloud.google.com/go/pubsub/v2"
@@ -37,22 +38,29 @@ func (s *SecurityServer) Ping(
 	}), nil
 }
 
-func (s *SecurityServer) GetControl(ctx context.Context, req *connect.Request[securityv1.GetControlRequest]) (*connect.Response[securityv1.GetControlResponse], error) {
-	// 自動生成された sqlc の関数を呼び出す
+func (s *SecurityServer) GetControl(
+	ctx context.Context,
+	req *connect.Request[securityv1.GetControlRequest],
+) (*connect.Response[securityv1.GetControlResponse], error) {
+
+	// sqlcが生成したクエリを呼び出し（JOINとarray_aggが効いた状態）
 	row, err := s.queries.GetControl(ctx, req.Msg.Id)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("control not found"))
+		// pgx.ErrNoRows の場合は「見つからない」エラーを返す
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("control not found: %s", req.Msg.Id))
 	}
 
+	// Protobufの型に詰め替え
 	return connect.NewResponse(&securityv1.GetControlResponse{
 		Control: &securityv1.Control{
 			Id:       row.ID,
 			Title:    row.Title,
 			Category: row.Category,
-			Tags:     row.Tags, // 正規化した配列
 			Question: row.Question,
 			Answer:   row.Answer,
 			Status:   row.Status,
+			Version:  fmt.Sprintf("%d", row.Version), // string型で定義されている場合
+			Tags:     row.Tags,
 		},
 	}), nil
 }
@@ -126,8 +134,39 @@ func (s *SecurityServer) CreateControl(ctx context.Context, req *connect.Request
 	}), nil
 }
 
-func (s *SecurityServer) SearchControls(ctx context.Context, req *connect.Request[securityv1.SearchControlsRequest]) (*connect.Response[securityv1.SearchControlsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("not implemented"))
+func (s *SecurityServer) SearchControls(
+	ctx context.Context,
+	req *connect.Request[securityv1.SearchControlsRequest],
+) (*connect.Response[securityv1.SearchControlsResponse], error) {
+
+	queryStr := req.Msg.Query
+
+	rows, err := s.queries.SearchControls(ctx, pgtype.Text{
+		String: queryStr,
+		Valid:  true, // NULLではなく、有効な文字列として扱う
+	})
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("search failed: %w", err))
+	}
+
+	results := make([]*securityv1.Control, 0, len(rows))
+	for _, row := range rows {
+		results = append(results, &securityv1.Control{
+			Id:       row.ID,
+			Title:    row.Title,
+			Category: row.Category,
+			Question: row.Question,
+			Answer:   row.Answer,
+			Status:   row.Status,
+			// エラー解決①: int32 を string に変換
+			Version: fmt.Sprintf("%d", row.Version),
+			Tags:    row.Tags,
+		})
+	}
+
+	return connect.NewResponse(&securityv1.SearchControlsResponse{
+		Hits: results,
+	}), nil
 }
 
 func (s *SecurityServer) ListUnmatchedTasks(ctx context.Context, req *connect.Request[securityv1.ListUnmatchedTasksRequest]) (*connect.Response[securityv1.ListUnmatchedTasksResponse], error) {
@@ -138,12 +177,38 @@ func (s *SecurityServer) ListFeedEvents(ctx context.Context, req *connect.Reques
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("not implemented"))
 }
 
-// 修正ポイント: ListControllers ではなく ListControls に変更
 func (s *SecurityServer) ListControls(
 	ctx context.Context,
 	req *connect.Request[securityv1.ListControlsRequest],
 ) (*connect.Response[securityv1.ListControlsResponse], error) {
-	return connect.NewResponse(&securityv1.ListControlsResponse{}), nil
+
+	// sqlcの一覧取得クエリを呼び出し
+	rows, err := s.queries.ListControls(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to fetch controls: %w", err))
+	}
+
+	// スライスの初期化（データが0件でもnilではなく空配列を返すようにする）
+	controls := make([]*securityv1.Control, 0, len(rows))
+
+	for _, row := range rows {
+		controls = append(controls, &securityv1.Control{
+			Id:       row.ID,
+			Title:    row.Title,
+			Category: row.Category,
+			Status:   row.Status,
+			Version:  fmt.Sprintf("%d", row.Version),
+			Tags:     row.Tags,
+			// 一覧画面では Question/Answer を省略しても良いですが、
+			// proto定義に含まれているなら入れておきます
+			Question: row.Question,
+			Answer:   row.Answer,
+		})
+	}
+
+	return connect.NewResponse(&securityv1.ListControlsResponse{
+		Controls: controls,
+	}), nil
 }
 
 func startPubSubListener(projectID string, subID string) {

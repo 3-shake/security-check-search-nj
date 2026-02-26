@@ -20,7 +20,8 @@ type Querier interface {
 	ListFeedEvents(ctx context.Context) ([]FeedEvent, error)
 	ListPendingUnmatchedTasks(ctx context.Context) ([]UnmatchedTask, error)
 	// 指定されたキーワード（$1）が、タイトル・質問・回答のどこかに含まれる Control を検索します
-	SearchControls(ctx context.Context, dollar_1 pgtype.Text) ([]Control, error)
+	// db/query/search.sql
+	SearchControls(ctx context.Context, dollar_1 pgtype.Text) ([]SearchControlsRow, error)
 	UpdateControl(ctx context.Context, arg UpdateControlParams) (Control, error)
 	UpsertTag(ctx context.Context, name string) (int32, error)
 }
