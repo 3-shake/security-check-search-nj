@@ -2,31 +2,125 @@ syntax = "proto3";
 
 package security.v1;
 
-// Goのパッケージ名を指定 (genディレクトリ配下の構成に合わせます)
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/asuka-sakamoto/security-system/gen/proto/security/v1;securityv1";
+
+// ---------------------------------------------------------
+// サービス定義（APIエンドポイント）
+// ---------------------------------------------------------
 service SecurityService {
   // 疎通確認用
   rpc Ping (PingRequest) returns (PingResponse) {}
 
-  // 将来使う予定のコントロール取得API (今は定義だけ)
+  // 1. Control（ナレッジ）管理API
   rpc ListControls (ListControlsRequest) returns (ListControlsResponse) {}
+  rpc GetControl (GetControlRequest) returns (GetControlResponse) {}
+  rpc CreateControl (CreateControlRequest) returns (CreateControlResponse) {}
+
+  // 2. 検索API
+  rpc SearchControls (SearchControlsRequest) returns (SearchControlsResponse) {}
+
+  // 3. 未マッチタスク（unmatched）API
+  rpc ListUnmatchedTasks (ListUnmatchedTasksRequest) returns (ListUnmatchedTasksResponse) {}
+
+  // 4. 活動履歴（feed）API
+  rpc ListFeedEvents (ListFeedEventsRequest) returns (ListFeedEventsResponse) {}
 }
 
-message PingRequest {
-  string message = 1;
+// ---------------------------------------------------------
+// 共通メッセージ（データ型）
+// ---------------------------------------------------------
+
+// Control本体のデータ構造
+message Control {
+  string id = 1;
+  string title = 2;
+  string question = 3;
+  string answer = 4;
+  string category = 5;
+  repeated string tags = 6;
+  int32 version = 7;
+  string updated_by = 8;
+  google.protobuf.Timestamp updated_at = 9;
+  string status = 10;
 }
 
-message PingResponse {
-  string message = 1;
+// Controlの変更履歴（バージョン）
+message ControlVersion {
+  string control_id = 1;
+  int32 version = 2;
+  string changed_by = 3;
+  google.protobuf.Timestamp changed_at = 4;
+  // Diff等のJSONは文字列として扱う
+  string diff_json = 5; 
 }
+
+// 未マッチタスク
+message UnmatchedTask {
+  int32 id = 1;
+  string original_file_name = 2;
+  int32 row_number = 3;
+  string question_text = 4;
+  string status = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+// イベント履歴（フィード）
+message FeedEvent {
+  int32 id = 1;
+  string event_type = 2;
+  string control_id = 3;
+  string user_name = 4;
+  string description = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+// ---------------------------------------------------------
+// リクエスト＆レスポンス メッセージ
+// ---------------------------------------------------------
+
+message PingRequest { string message = 1; }
+message PingResponse { string message = 1; }
 
 message ListControlsRequest {}
-
 message ListControlsResponse {
   repeated Control controls = 1;
 }
 
-message Control {
+message GetControlRequest {
   string id = 1;
-  string title = 2;
+}
+message GetControlResponse {
+  Control control = 1;
+  repeated ControlVersion history = 2; // 詳細画面用（過去の履歴も返す）
+}
+
+message CreateControlRequest {
+  string title = 1;
+  string question = 2;
+  string answer = 3;
+  string category = 4;
+  repeated string tags = 5;
+  string updated_by = 6;
+}
+message CreateControlResponse {
+  Control control = 1;
+}
+
+message SearchControlsRequest {
+  string query = 1;
+}
+message SearchControlsResponse {
+  repeated Control controls = 1;
+}
+
+message ListUnmatchedTasksRequest {}
+message ListUnmatchedTasksResponse {
+  repeated UnmatchedTask tasks = 1;
+}
+
+message ListFeedEventsRequest {}
+message ListFeedEventsResponse {
+  repeated FeedEvent events = 1;
 }

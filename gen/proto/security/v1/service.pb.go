@@ -9,6 +9,7 @@ package securityv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -21,6 +22,371 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Control本体のデータ構造
+type Control struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Question      string                 `protobuf:"bytes,3,opt,name=question,proto3" json:"question,omitempty"`
+	Answer        string                 `protobuf:"bytes,4,opt,name=answer,proto3" json:"answer,omitempty"`
+	Category      string                 `protobuf:"bytes,5,opt,name=category,proto3" json:"category,omitempty"`
+	Tags          []string               `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
+	Version       int32                  `protobuf:"varint,7,opt,name=version,proto3" json:"version,omitempty"`
+	UpdatedBy     string                 `protobuf:"bytes,8,opt,name=updated_by,json=updatedBy,proto3" json:"updated_by,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Status        string                 `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Control) Reset() {
+	*x = Control{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Control) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Control) ProtoMessage() {}
+
+func (x *Control) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Control.ProtoReflect.Descriptor instead.
+func (*Control) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Control) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Control) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *Control) GetQuestion() string {
+	if x != nil {
+		return x.Question
+	}
+	return ""
+}
+
+func (x *Control) GetAnswer() string {
+	if x != nil {
+		return x.Answer
+	}
+	return ""
+}
+
+func (x *Control) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *Control) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+func (x *Control) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *Control) GetUpdatedBy() string {
+	if x != nil {
+		return x.UpdatedBy
+	}
+	return ""
+}
+
+func (x *Control) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+func (x *Control) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+// Controlの変更履歴（バージョン）
+type ControlVersion struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	ControlId string                 `protobuf:"bytes,1,opt,name=control_id,json=controlId,proto3" json:"control_id,omitempty"`
+	Version   int32                  `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
+	ChangedBy string                 `protobuf:"bytes,3,opt,name=changed_by,json=changedBy,proto3" json:"changed_by,omitempty"`
+	ChangedAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=changed_at,json=changedAt,proto3" json:"changed_at,omitempty"`
+	// Diff等のJSONは文字列として扱う
+	DiffJson      string `protobuf:"bytes,5,opt,name=diff_json,json=diffJson,proto3" json:"diff_json,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ControlVersion) Reset() {
+	*x = ControlVersion{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ControlVersion) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ControlVersion) ProtoMessage() {}
+
+func (x *ControlVersion) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ControlVersion.ProtoReflect.Descriptor instead.
+func (*ControlVersion) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ControlVersion) GetControlId() string {
+	if x != nil {
+		return x.ControlId
+	}
+	return ""
+}
+
+func (x *ControlVersion) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *ControlVersion) GetChangedBy() string {
+	if x != nil {
+		return x.ChangedBy
+	}
+	return ""
+}
+
+func (x *ControlVersion) GetChangedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ChangedAt
+	}
+	return nil
+}
+
+func (x *ControlVersion) GetDiffJson() string {
+	if x != nil {
+		return x.DiffJson
+	}
+	return ""
+}
+
+// 未マッチタスク
+type UnmatchedTask struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Id               int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	OriginalFileName string                 `protobuf:"bytes,2,opt,name=original_file_name,json=originalFileName,proto3" json:"original_file_name,omitempty"`
+	RowNumber        int32                  `protobuf:"varint,3,opt,name=row_number,json=rowNumber,proto3" json:"row_number,omitempty"`
+	QuestionText     string                 `protobuf:"bytes,4,opt,name=question_text,json=questionText,proto3" json:"question_text,omitempty"`
+	Status           string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
+	CreatedAt        *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *UnmatchedTask) Reset() {
+	*x = UnmatchedTask{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnmatchedTask) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnmatchedTask) ProtoMessage() {}
+
+func (x *UnmatchedTask) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnmatchedTask.ProtoReflect.Descriptor instead.
+func (*UnmatchedTask) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *UnmatchedTask) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *UnmatchedTask) GetOriginalFileName() string {
+	if x != nil {
+		return x.OriginalFileName
+	}
+	return ""
+}
+
+func (x *UnmatchedTask) GetRowNumber() int32 {
+	if x != nil {
+		return x.RowNumber
+	}
+	return 0
+}
+
+func (x *UnmatchedTask) GetQuestionText() string {
+	if x != nil {
+		return x.QuestionText
+	}
+	return ""
+}
+
+func (x *UnmatchedTask) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *UnmatchedTask) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+// イベント履歴（フィード）
+type FeedEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	EventType     string                 `protobuf:"bytes,2,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
+	ControlId     string                 `protobuf:"bytes,3,opt,name=control_id,json=controlId,proto3" json:"control_id,omitempty"`
+	UserName      string                 `protobuf:"bytes,4,opt,name=user_name,json=userName,proto3" json:"user_name,omitempty"`
+	Description   string                 `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FeedEvent) Reset() {
+	*x = FeedEvent{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FeedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FeedEvent) ProtoMessage() {}
+
+func (x *FeedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FeedEvent.ProtoReflect.Descriptor instead.
+func (*FeedEvent) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *FeedEvent) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *FeedEvent) GetEventType() string {
+	if x != nil {
+		return x.EventType
+	}
+	return ""
+}
+
+func (x *FeedEvent) GetControlId() string {
+	if x != nil {
+		return x.ControlId
+	}
+	return ""
+}
+
+func (x *FeedEvent) GetUserName() string {
+	if x != nil {
+		return x.UserName
+	}
+	return ""
+}
+
+func (x *FeedEvent) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *FeedEvent) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
 type PingRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
@@ -30,7 +396,7 @@ type PingRequest struct {
 
 func (x *PingRequest) Reset() {
 	*x = PingRequest{}
-	mi := &file_proto_security_v1_service_proto_msgTypes[0]
+	mi := &file_proto_security_v1_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -42,7 +408,7 @@ func (x *PingRequest) String() string {
 func (*PingRequest) ProtoMessage() {}
 
 func (x *PingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_security_v1_service_proto_msgTypes[0]
+	mi := &file_proto_security_v1_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -55,7 +421,7 @@ func (x *PingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PingRequest.ProtoReflect.Descriptor instead.
 func (*PingRequest) Descriptor() ([]byte, []int) {
-	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{0}
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PingRequest) GetMessage() string {
@@ -74,7 +440,7 @@ type PingResponse struct {
 
 func (x *PingResponse) Reset() {
 	*x = PingResponse{}
-	mi := &file_proto_security_v1_service_proto_msgTypes[1]
+	mi := &file_proto_security_v1_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -86,7 +452,7 @@ func (x *PingResponse) String() string {
 func (*PingResponse) ProtoMessage() {}
 
 func (x *PingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_security_v1_service_proto_msgTypes[1]
+	mi := &file_proto_security_v1_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -99,7 +465,7 @@ func (x *PingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PingResponse.ProtoReflect.Descriptor instead.
 func (*PingResponse) Descriptor() ([]byte, []int) {
-	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{1}
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PingResponse) GetMessage() string {
@@ -117,7 +483,7 @@ type ListControlsRequest struct {
 
 func (x *ListControlsRequest) Reset() {
 	*x = ListControlsRequest{}
-	mi := &file_proto_security_v1_service_proto_msgTypes[2]
+	mi := &file_proto_security_v1_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -129,7 +495,7 @@ func (x *ListControlsRequest) String() string {
 func (*ListControlsRequest) ProtoMessage() {}
 
 func (x *ListControlsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_security_v1_service_proto_msgTypes[2]
+	mi := &file_proto_security_v1_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -142,7 +508,7 @@ func (x *ListControlsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListControlsRequest.ProtoReflect.Descriptor instead.
 func (*ListControlsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{2}
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{6}
 }
 
 type ListControlsResponse struct {
@@ -154,7 +520,7 @@ type ListControlsResponse struct {
 
 func (x *ListControlsResponse) Reset() {
 	*x = ListControlsResponse{}
-	mi := &file_proto_security_v1_service_proto_msgTypes[3]
+	mi := &file_proto_security_v1_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -166,7 +532,7 @@ func (x *ListControlsResponse) String() string {
 func (*ListControlsResponse) ProtoMessage() {}
 
 func (x *ListControlsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_security_v1_service_proto_msgTypes[3]
+	mi := &file_proto_security_v1_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -179,7 +545,7 @@ func (x *ListControlsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListControlsResponse.ProtoReflect.Descriptor instead.
 func (*ListControlsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{3}
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListControlsResponse) GetControls() []*Control {
@@ -189,29 +555,28 @@ func (x *ListControlsResponse) GetControls() []*Control {
 	return nil
 }
 
-type Control struct {
+type GetControlRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Control) Reset() {
-	*x = Control{}
-	mi := &file_proto_security_v1_service_proto_msgTypes[4]
+func (x *GetControlRequest) Reset() {
+	*x = GetControlRequest{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Control) String() string {
+func (x *GetControlRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Control) ProtoMessage() {}
+func (*GetControlRequest) ProtoMessage() {}
 
-func (x *Control) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_security_v1_service_proto_msgTypes[4]
+func (x *GetControlRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -222,43 +587,534 @@ func (x *Control) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Control.ProtoReflect.Descriptor instead.
-func (*Control) Descriptor() ([]byte, []int) {
-	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{4}
+// Deprecated: Use GetControlRequest.ProtoReflect.Descriptor instead.
+func (*GetControlRequest) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *Control) GetId() string {
+func (x *GetControlRequest) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *Control) GetTitle() string {
+type GetControlResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Control       *Control               `protobuf:"bytes,1,opt,name=control,proto3" json:"control,omitempty"`
+	History       []*ControlVersion      `protobuf:"bytes,2,rep,name=history,proto3" json:"history,omitempty"` // 詳細画面用（過去の履歴も返す）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetControlResponse) Reset() {
+	*x = GetControlResponse{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetControlResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetControlResponse) ProtoMessage() {}
+
+func (x *GetControlResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetControlResponse.ProtoReflect.Descriptor instead.
+func (*GetControlResponse) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GetControlResponse) GetControl() *Control {
+	if x != nil {
+		return x.Control
+	}
+	return nil
+}
+
+func (x *GetControlResponse) GetHistory() []*ControlVersion {
+	if x != nil {
+		return x.History
+	}
+	return nil
+}
+
+type CreateControlRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Question      string                 `protobuf:"bytes,2,opt,name=question,proto3" json:"question,omitempty"`
+	Answer        string                 `protobuf:"bytes,3,opt,name=answer,proto3" json:"answer,omitempty"`
+	Category      string                 `protobuf:"bytes,4,opt,name=category,proto3" json:"category,omitempty"`
+	Tags          []string               `protobuf:"bytes,5,rep,name=tags,proto3" json:"tags,omitempty"`
+	UpdatedBy     string                 `protobuf:"bytes,6,opt,name=updated_by,json=updatedBy,proto3" json:"updated_by,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateControlRequest) Reset() {
+	*x = CreateControlRequest{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateControlRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateControlRequest) ProtoMessage() {}
+
+func (x *CreateControlRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateControlRequest.ProtoReflect.Descriptor instead.
+func (*CreateControlRequest) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *CreateControlRequest) GetTitle() string {
 	if x != nil {
 		return x.Title
 	}
 	return ""
 }
 
+func (x *CreateControlRequest) GetQuestion() string {
+	if x != nil {
+		return x.Question
+	}
+	return ""
+}
+
+func (x *CreateControlRequest) GetAnswer() string {
+	if x != nil {
+		return x.Answer
+	}
+	return ""
+}
+
+func (x *CreateControlRequest) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *CreateControlRequest) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+func (x *CreateControlRequest) GetUpdatedBy() string {
+	if x != nil {
+		return x.UpdatedBy
+	}
+	return ""
+}
+
+type CreateControlResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Control       *Control               `protobuf:"bytes,1,opt,name=control,proto3" json:"control,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateControlResponse) Reset() {
+	*x = CreateControlResponse{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateControlResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateControlResponse) ProtoMessage() {}
+
+func (x *CreateControlResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateControlResponse.ProtoReflect.Descriptor instead.
+func (*CreateControlResponse) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *CreateControlResponse) GetControl() *Control {
+	if x != nil {
+		return x.Control
+	}
+	return nil
+}
+
+type SearchControlsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Query         string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchControlsRequest) Reset() {
+	*x = SearchControlsRequest{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchControlsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchControlsRequest) ProtoMessage() {}
+
+func (x *SearchControlsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchControlsRequest.ProtoReflect.Descriptor instead.
+func (*SearchControlsRequest) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *SearchControlsRequest) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
+}
+
+type SearchControlsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Controls      []*Control             `protobuf:"bytes,1,rep,name=controls,proto3" json:"controls,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchControlsResponse) Reset() {
+	*x = SearchControlsResponse{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchControlsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchControlsResponse) ProtoMessage() {}
+
+func (x *SearchControlsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchControlsResponse.ProtoReflect.Descriptor instead.
+func (*SearchControlsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *SearchControlsResponse) GetControls() []*Control {
+	if x != nil {
+		return x.Controls
+	}
+	return nil
+}
+
+type ListUnmatchedTasksRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUnmatchedTasksRequest) Reset() {
+	*x = ListUnmatchedTasksRequest{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUnmatchedTasksRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUnmatchedTasksRequest) ProtoMessage() {}
+
+func (x *ListUnmatchedTasksRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUnmatchedTasksRequest.ProtoReflect.Descriptor instead.
+func (*ListUnmatchedTasksRequest) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{14}
+}
+
+type ListUnmatchedTasksResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tasks         []*UnmatchedTask       `protobuf:"bytes,1,rep,name=tasks,proto3" json:"tasks,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUnmatchedTasksResponse) Reset() {
+	*x = ListUnmatchedTasksResponse{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUnmatchedTasksResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUnmatchedTasksResponse) ProtoMessage() {}
+
+func (x *ListUnmatchedTasksResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUnmatchedTasksResponse.ProtoReflect.Descriptor instead.
+func (*ListUnmatchedTasksResponse) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ListUnmatchedTasksResponse) GetTasks() []*UnmatchedTask {
+	if x != nil {
+		return x.Tasks
+	}
+	return nil
+}
+
+type ListFeedEventsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFeedEventsRequest) Reset() {
+	*x = ListFeedEventsRequest{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFeedEventsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFeedEventsRequest) ProtoMessage() {}
+
+func (x *ListFeedEventsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFeedEventsRequest.ProtoReflect.Descriptor instead.
+func (*ListFeedEventsRequest) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{16}
+}
+
+type ListFeedEventsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Events        []*FeedEvent           `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFeedEventsResponse) Reset() {
+	*x = ListFeedEventsResponse{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFeedEventsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFeedEventsResponse) ProtoMessage() {}
+
+func (x *ListFeedEventsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFeedEventsResponse.ProtoReflect.Descriptor instead.
+func (*ListFeedEventsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ListFeedEventsResponse) GetEvents() []*FeedEvent {
+	if x != nil {
+		return x.Events
+	}
+	return nil
+}
+
 var File_proto_security_v1_service_proto protoreflect.FileDescriptor
 
 const file_proto_security_v1_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1fproto/security/v1/service.proto\x12\vsecurity.v1\"'\n" +
+	"\x1fproto/security/v1/service.proto\x12\vsecurity.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9f\x02\n" +
+	"\aControl\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\x1a\n" +
+	"\bquestion\x18\x03 \x01(\tR\bquestion\x12\x16\n" +
+	"\x06answer\x18\x04 \x01(\tR\x06answer\x12\x1a\n" +
+	"\bcategory\x18\x05 \x01(\tR\bcategory\x12\x12\n" +
+	"\x04tags\x18\x06 \x03(\tR\x04tags\x12\x18\n" +
+	"\aversion\x18\a \x01(\x05R\aversion\x12\x1d\n" +
+	"\n" +
+	"updated_by\x18\b \x01(\tR\tupdatedBy\x129\n" +
+	"\n" +
+	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\x16\n" +
+	"\x06status\x18\n" +
+	" \x01(\tR\x06status\"\xc0\x01\n" +
+	"\x0eControlVersion\x12\x1d\n" +
+	"\n" +
+	"control_id\x18\x01 \x01(\tR\tcontrolId\x12\x18\n" +
+	"\aversion\x18\x02 \x01(\x05R\aversion\x12\x1d\n" +
+	"\n" +
+	"changed_by\x18\x03 \x01(\tR\tchangedBy\x129\n" +
+	"\n" +
+	"changed_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tchangedAt\x12\x1b\n" +
+	"\tdiff_json\x18\x05 \x01(\tR\bdiffJson\"\xe4\x01\n" +
+	"\rUnmatchedTask\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12,\n" +
+	"\x12original_file_name\x18\x02 \x01(\tR\x10originalFileName\x12\x1d\n" +
+	"\n" +
+	"row_number\x18\x03 \x01(\x05R\trowNumber\x12#\n" +
+	"\rquestion_text\x18\x04 \x01(\tR\fquestionText\x12\x16\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status\x129\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xd3\x01\n" +
+	"\tFeedEvent\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x1d\n" +
+	"\n" +
+	"event_type\x18\x02 \x01(\tR\teventType\x12\x1d\n" +
+	"\n" +
+	"control_id\x18\x03 \x01(\tR\tcontrolId\x12\x1b\n" +
+	"\tuser_name\x18\x04 \x01(\tR\buserName\x12 \n" +
+	"\vdescription\x18\x05 \x01(\tR\vdescription\x129\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"'\n" +
 	"\vPingRequest\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\"(\n" +
 	"\fPingResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\"\x15\n" +
 	"\x13ListControlsRequest\"H\n" +
 	"\x14ListControlsResponse\x120\n" +
-	"\bcontrols\x18\x01 \x03(\v2\x14.security.v1.ControlR\bcontrols\"/\n" +
-	"\aControl\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title2\xa7\x01\n" +
+	"\bcontrols\x18\x01 \x03(\v2\x14.security.v1.ControlR\bcontrols\"#\n" +
+	"\x11GetControlRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"{\n" +
+	"\x12GetControlResponse\x12.\n" +
+	"\acontrol\x18\x01 \x01(\v2\x14.security.v1.ControlR\acontrol\x125\n" +
+	"\ahistory\x18\x02 \x03(\v2\x1b.security.v1.ControlVersionR\ahistory\"\xaf\x01\n" +
+	"\x14CreateControlRequest\x12\x14\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\x12\x1a\n" +
+	"\bquestion\x18\x02 \x01(\tR\bquestion\x12\x16\n" +
+	"\x06answer\x18\x03 \x01(\tR\x06answer\x12\x1a\n" +
+	"\bcategory\x18\x04 \x01(\tR\bcategory\x12\x12\n" +
+	"\x04tags\x18\x05 \x03(\tR\x04tags\x12\x1d\n" +
+	"\n" +
+	"updated_by\x18\x06 \x01(\tR\tupdatedBy\"G\n" +
+	"\x15CreateControlResponse\x12.\n" +
+	"\acontrol\x18\x01 \x01(\v2\x14.security.v1.ControlR\acontrol\"-\n" +
+	"\x15SearchControlsRequest\x12\x14\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\"J\n" +
+	"\x16SearchControlsResponse\x120\n" +
+	"\bcontrols\x18\x01 \x03(\v2\x14.security.v1.ControlR\bcontrols\"\x1b\n" +
+	"\x19ListUnmatchedTasksRequest\"N\n" +
+	"\x1aListUnmatchedTasksResponse\x120\n" +
+	"\x05tasks\x18\x01 \x03(\v2\x1a.security.v1.UnmatchedTaskR\x05tasks\"\x17\n" +
+	"\x15ListFeedEventsRequest\"H\n" +
+	"\x16ListFeedEventsResponse\x12.\n" +
+	"\x06events\x18\x01 \x03(\v2\x16.security.v1.FeedEventR\x06events2\xf5\x04\n" +
 	"\x0fSecurityService\x12=\n" +
 	"\x04Ping\x12\x18.security.v1.PingRequest\x1a\x19.security.v1.PingResponse\"\x00\x12U\n" +
-	"\fListControls\x12 .security.v1.ListControlsRequest\x1a!.security.v1.ListControlsResponse\"\x00BLZJgithub.com/asuka-sakamoto/security-system/gen/proto/security/v1;securityv1b\x06proto3"
+	"\fListControls\x12 .security.v1.ListControlsRequest\x1a!.security.v1.ListControlsResponse\"\x00\x12O\n" +
+	"\n" +
+	"GetControl\x12\x1e.security.v1.GetControlRequest\x1a\x1f.security.v1.GetControlResponse\"\x00\x12X\n" +
+	"\rCreateControl\x12!.security.v1.CreateControlRequest\x1a\".security.v1.CreateControlResponse\"\x00\x12[\n" +
+	"\x0eSearchControls\x12\".security.v1.SearchControlsRequest\x1a#.security.v1.SearchControlsResponse\"\x00\x12g\n" +
+	"\x12ListUnmatchedTasks\x12&.security.v1.ListUnmatchedTasksRequest\x1a'.security.v1.ListUnmatchedTasksResponse\"\x00\x12[\n" +
+	"\x0eListFeedEvents\x12\".security.v1.ListFeedEventsRequest\x1a#.security.v1.ListFeedEventsResponse\"\x00BLZJgithub.com/asuka-sakamoto/security-system/gen/proto/security/v1;securityv1b\x06proto3"
 
 var (
 	file_proto_security_v1_service_proto_rawDescOnce sync.Once
@@ -272,25 +1128,59 @@ func file_proto_security_v1_service_proto_rawDescGZIP() []byte {
 	return file_proto_security_v1_service_proto_rawDescData
 }
 
-var file_proto_security_v1_service_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_proto_security_v1_service_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_proto_security_v1_service_proto_goTypes = []any{
-	(*PingRequest)(nil),          // 0: security.v1.PingRequest
-	(*PingResponse)(nil),         // 1: security.v1.PingResponse
-	(*ListControlsRequest)(nil),  // 2: security.v1.ListControlsRequest
-	(*ListControlsResponse)(nil), // 3: security.v1.ListControlsResponse
-	(*Control)(nil),              // 4: security.v1.Control
+	(*Control)(nil),                    // 0: security.v1.Control
+	(*ControlVersion)(nil),             // 1: security.v1.ControlVersion
+	(*UnmatchedTask)(nil),              // 2: security.v1.UnmatchedTask
+	(*FeedEvent)(nil),                  // 3: security.v1.FeedEvent
+	(*PingRequest)(nil),                // 4: security.v1.PingRequest
+	(*PingResponse)(nil),               // 5: security.v1.PingResponse
+	(*ListControlsRequest)(nil),        // 6: security.v1.ListControlsRequest
+	(*ListControlsResponse)(nil),       // 7: security.v1.ListControlsResponse
+	(*GetControlRequest)(nil),          // 8: security.v1.GetControlRequest
+	(*GetControlResponse)(nil),         // 9: security.v1.GetControlResponse
+	(*CreateControlRequest)(nil),       // 10: security.v1.CreateControlRequest
+	(*CreateControlResponse)(nil),      // 11: security.v1.CreateControlResponse
+	(*SearchControlsRequest)(nil),      // 12: security.v1.SearchControlsRequest
+	(*SearchControlsResponse)(nil),     // 13: security.v1.SearchControlsResponse
+	(*ListUnmatchedTasksRequest)(nil),  // 14: security.v1.ListUnmatchedTasksRequest
+	(*ListUnmatchedTasksResponse)(nil), // 15: security.v1.ListUnmatchedTasksResponse
+	(*ListFeedEventsRequest)(nil),      // 16: security.v1.ListFeedEventsRequest
+	(*ListFeedEventsResponse)(nil),     // 17: security.v1.ListFeedEventsResponse
+	(*timestamppb.Timestamp)(nil),      // 18: google.protobuf.Timestamp
 }
 var file_proto_security_v1_service_proto_depIdxs = []int32{
-	4, // 0: security.v1.ListControlsResponse.controls:type_name -> security.v1.Control
-	0, // 1: security.v1.SecurityService.Ping:input_type -> security.v1.PingRequest
-	2, // 2: security.v1.SecurityService.ListControls:input_type -> security.v1.ListControlsRequest
-	1, // 3: security.v1.SecurityService.Ping:output_type -> security.v1.PingResponse
-	3, // 4: security.v1.SecurityService.ListControls:output_type -> security.v1.ListControlsResponse
-	3, // [3:5] is the sub-list for method output_type
-	1, // [1:3] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	18, // 0: security.v1.Control.updated_at:type_name -> google.protobuf.Timestamp
+	18, // 1: security.v1.ControlVersion.changed_at:type_name -> google.protobuf.Timestamp
+	18, // 2: security.v1.UnmatchedTask.created_at:type_name -> google.protobuf.Timestamp
+	18, // 3: security.v1.FeedEvent.created_at:type_name -> google.protobuf.Timestamp
+	0,  // 4: security.v1.ListControlsResponse.controls:type_name -> security.v1.Control
+	0,  // 5: security.v1.GetControlResponse.control:type_name -> security.v1.Control
+	1,  // 6: security.v1.GetControlResponse.history:type_name -> security.v1.ControlVersion
+	0,  // 7: security.v1.CreateControlResponse.control:type_name -> security.v1.Control
+	0,  // 8: security.v1.SearchControlsResponse.controls:type_name -> security.v1.Control
+	2,  // 9: security.v1.ListUnmatchedTasksResponse.tasks:type_name -> security.v1.UnmatchedTask
+	3,  // 10: security.v1.ListFeedEventsResponse.events:type_name -> security.v1.FeedEvent
+	4,  // 11: security.v1.SecurityService.Ping:input_type -> security.v1.PingRequest
+	6,  // 12: security.v1.SecurityService.ListControls:input_type -> security.v1.ListControlsRequest
+	8,  // 13: security.v1.SecurityService.GetControl:input_type -> security.v1.GetControlRequest
+	10, // 14: security.v1.SecurityService.CreateControl:input_type -> security.v1.CreateControlRequest
+	12, // 15: security.v1.SecurityService.SearchControls:input_type -> security.v1.SearchControlsRequest
+	14, // 16: security.v1.SecurityService.ListUnmatchedTasks:input_type -> security.v1.ListUnmatchedTasksRequest
+	16, // 17: security.v1.SecurityService.ListFeedEvents:input_type -> security.v1.ListFeedEventsRequest
+	5,  // 18: security.v1.SecurityService.Ping:output_type -> security.v1.PingResponse
+	7,  // 19: security.v1.SecurityService.ListControls:output_type -> security.v1.ListControlsResponse
+	9,  // 20: security.v1.SecurityService.GetControl:output_type -> security.v1.GetControlResponse
+	11, // 21: security.v1.SecurityService.CreateControl:output_type -> security.v1.CreateControlResponse
+	13, // 22: security.v1.SecurityService.SearchControls:output_type -> security.v1.SearchControlsResponse
+	15, // 23: security.v1.SecurityService.ListUnmatchedTasks:output_type -> security.v1.ListUnmatchedTasksResponse
+	17, // 24: security.v1.SecurityService.ListFeedEvents:output_type -> security.v1.ListFeedEventsResponse
+	18, // [18:25] is the sub-list for method output_type
+	11, // [11:18] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_proto_security_v1_service_proto_init() }
@@ -304,7 +1194,7 @@ func file_proto_security_v1_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_security_v1_service_proto_rawDesc), len(file_proto_security_v1_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

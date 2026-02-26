@@ -38,14 +38,37 @@ const (
 	// SecurityServiceListControlsProcedure is the fully-qualified name of the SecurityService's
 	// ListControls RPC.
 	SecurityServiceListControlsProcedure = "/security.v1.SecurityService/ListControls"
+	// SecurityServiceGetControlProcedure is the fully-qualified name of the SecurityService's
+	// GetControl RPC.
+	SecurityServiceGetControlProcedure = "/security.v1.SecurityService/GetControl"
+	// SecurityServiceCreateControlProcedure is the fully-qualified name of the SecurityService's
+	// CreateControl RPC.
+	SecurityServiceCreateControlProcedure = "/security.v1.SecurityService/CreateControl"
+	// SecurityServiceSearchControlsProcedure is the fully-qualified name of the SecurityService's
+	// SearchControls RPC.
+	SecurityServiceSearchControlsProcedure = "/security.v1.SecurityService/SearchControls"
+	// SecurityServiceListUnmatchedTasksProcedure is the fully-qualified name of the SecurityService's
+	// ListUnmatchedTasks RPC.
+	SecurityServiceListUnmatchedTasksProcedure = "/security.v1.SecurityService/ListUnmatchedTasks"
+	// SecurityServiceListFeedEventsProcedure is the fully-qualified name of the SecurityService's
+	// ListFeedEvents RPC.
+	SecurityServiceListFeedEventsProcedure = "/security.v1.SecurityService/ListFeedEvents"
 )
 
 // SecurityServiceClient is a client for the security.v1.SecurityService service.
 type SecurityServiceClient interface {
 	// 疎通確認用
 	Ping(context.Context, *connect.Request[v1.PingRequest]) (*connect.Response[v1.PingResponse], error)
-	// 将来使う予定のコントロール取得API (今は定義だけ)
+	// 1. Control（ナレッジ）管理API
 	ListControls(context.Context, *connect.Request[v1.ListControlsRequest]) (*connect.Response[v1.ListControlsResponse], error)
+	GetControl(context.Context, *connect.Request[v1.GetControlRequest]) (*connect.Response[v1.GetControlResponse], error)
+	CreateControl(context.Context, *connect.Request[v1.CreateControlRequest]) (*connect.Response[v1.CreateControlResponse], error)
+	// 2. 検索API
+	SearchControls(context.Context, *connect.Request[v1.SearchControlsRequest]) (*connect.Response[v1.SearchControlsResponse], error)
+	// 3. 未マッチタスク（unmatched）API
+	ListUnmatchedTasks(context.Context, *connect.Request[v1.ListUnmatchedTasksRequest]) (*connect.Response[v1.ListUnmatchedTasksResponse], error)
+	// 4. 活動履歴（feed）API
+	ListFeedEvents(context.Context, *connect.Request[v1.ListFeedEventsRequest]) (*connect.Response[v1.ListFeedEventsResponse], error)
 }
 
 // NewSecurityServiceClient constructs a client for the security.v1.SecurityService service. By
@@ -71,13 +94,48 @@ func NewSecurityServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(securityServiceMethods.ByName("ListControls")),
 			connect.WithClientOptions(opts...),
 		),
+		getControl: connect.NewClient[v1.GetControlRequest, v1.GetControlResponse](
+			httpClient,
+			baseURL+SecurityServiceGetControlProcedure,
+			connect.WithSchema(securityServiceMethods.ByName("GetControl")),
+			connect.WithClientOptions(opts...),
+		),
+		createControl: connect.NewClient[v1.CreateControlRequest, v1.CreateControlResponse](
+			httpClient,
+			baseURL+SecurityServiceCreateControlProcedure,
+			connect.WithSchema(securityServiceMethods.ByName("CreateControl")),
+			connect.WithClientOptions(opts...),
+		),
+		searchControls: connect.NewClient[v1.SearchControlsRequest, v1.SearchControlsResponse](
+			httpClient,
+			baseURL+SecurityServiceSearchControlsProcedure,
+			connect.WithSchema(securityServiceMethods.ByName("SearchControls")),
+			connect.WithClientOptions(opts...),
+		),
+		listUnmatchedTasks: connect.NewClient[v1.ListUnmatchedTasksRequest, v1.ListUnmatchedTasksResponse](
+			httpClient,
+			baseURL+SecurityServiceListUnmatchedTasksProcedure,
+			connect.WithSchema(securityServiceMethods.ByName("ListUnmatchedTasks")),
+			connect.WithClientOptions(opts...),
+		),
+		listFeedEvents: connect.NewClient[v1.ListFeedEventsRequest, v1.ListFeedEventsResponse](
+			httpClient,
+			baseURL+SecurityServiceListFeedEventsProcedure,
+			connect.WithSchema(securityServiceMethods.ByName("ListFeedEvents")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // securityServiceClient implements SecurityServiceClient.
 type securityServiceClient struct {
-	ping         *connect.Client[v1.PingRequest, v1.PingResponse]
-	listControls *connect.Client[v1.ListControlsRequest, v1.ListControlsResponse]
+	ping               *connect.Client[v1.PingRequest, v1.PingResponse]
+	listControls       *connect.Client[v1.ListControlsRequest, v1.ListControlsResponse]
+	getControl         *connect.Client[v1.GetControlRequest, v1.GetControlResponse]
+	createControl      *connect.Client[v1.CreateControlRequest, v1.CreateControlResponse]
+	searchControls     *connect.Client[v1.SearchControlsRequest, v1.SearchControlsResponse]
+	listUnmatchedTasks *connect.Client[v1.ListUnmatchedTasksRequest, v1.ListUnmatchedTasksResponse]
+	listFeedEvents     *connect.Client[v1.ListFeedEventsRequest, v1.ListFeedEventsResponse]
 }
 
 // Ping calls security.v1.SecurityService.Ping.
@@ -90,12 +148,45 @@ func (c *securityServiceClient) ListControls(ctx context.Context, req *connect.R
 	return c.listControls.CallUnary(ctx, req)
 }
 
+// GetControl calls security.v1.SecurityService.GetControl.
+func (c *securityServiceClient) GetControl(ctx context.Context, req *connect.Request[v1.GetControlRequest]) (*connect.Response[v1.GetControlResponse], error) {
+	return c.getControl.CallUnary(ctx, req)
+}
+
+// CreateControl calls security.v1.SecurityService.CreateControl.
+func (c *securityServiceClient) CreateControl(ctx context.Context, req *connect.Request[v1.CreateControlRequest]) (*connect.Response[v1.CreateControlResponse], error) {
+	return c.createControl.CallUnary(ctx, req)
+}
+
+// SearchControls calls security.v1.SecurityService.SearchControls.
+func (c *securityServiceClient) SearchControls(ctx context.Context, req *connect.Request[v1.SearchControlsRequest]) (*connect.Response[v1.SearchControlsResponse], error) {
+	return c.searchControls.CallUnary(ctx, req)
+}
+
+// ListUnmatchedTasks calls security.v1.SecurityService.ListUnmatchedTasks.
+func (c *securityServiceClient) ListUnmatchedTasks(ctx context.Context, req *connect.Request[v1.ListUnmatchedTasksRequest]) (*connect.Response[v1.ListUnmatchedTasksResponse], error) {
+	return c.listUnmatchedTasks.CallUnary(ctx, req)
+}
+
+// ListFeedEvents calls security.v1.SecurityService.ListFeedEvents.
+func (c *securityServiceClient) ListFeedEvents(ctx context.Context, req *connect.Request[v1.ListFeedEventsRequest]) (*connect.Response[v1.ListFeedEventsResponse], error) {
+	return c.listFeedEvents.CallUnary(ctx, req)
+}
+
 // SecurityServiceHandler is an implementation of the security.v1.SecurityService service.
 type SecurityServiceHandler interface {
 	// 疎通確認用
 	Ping(context.Context, *connect.Request[v1.PingRequest]) (*connect.Response[v1.PingResponse], error)
-	// 将来使う予定のコントロール取得API (今は定義だけ)
+	// 1. Control（ナレッジ）管理API
 	ListControls(context.Context, *connect.Request[v1.ListControlsRequest]) (*connect.Response[v1.ListControlsResponse], error)
+	GetControl(context.Context, *connect.Request[v1.GetControlRequest]) (*connect.Response[v1.GetControlResponse], error)
+	CreateControl(context.Context, *connect.Request[v1.CreateControlRequest]) (*connect.Response[v1.CreateControlResponse], error)
+	// 2. 検索API
+	SearchControls(context.Context, *connect.Request[v1.SearchControlsRequest]) (*connect.Response[v1.SearchControlsResponse], error)
+	// 3. 未マッチタスク（unmatched）API
+	ListUnmatchedTasks(context.Context, *connect.Request[v1.ListUnmatchedTasksRequest]) (*connect.Response[v1.ListUnmatchedTasksResponse], error)
+	// 4. 活動履歴（feed）API
+	ListFeedEvents(context.Context, *connect.Request[v1.ListFeedEventsRequest]) (*connect.Response[v1.ListFeedEventsResponse], error)
 }
 
 // NewSecurityServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -117,12 +208,52 @@ func NewSecurityServiceHandler(svc SecurityServiceHandler, opts ...connect.Handl
 		connect.WithSchema(securityServiceMethods.ByName("ListControls")),
 		connect.WithHandlerOptions(opts...),
 	)
+	securityServiceGetControlHandler := connect.NewUnaryHandler(
+		SecurityServiceGetControlProcedure,
+		svc.GetControl,
+		connect.WithSchema(securityServiceMethods.ByName("GetControl")),
+		connect.WithHandlerOptions(opts...),
+	)
+	securityServiceCreateControlHandler := connect.NewUnaryHandler(
+		SecurityServiceCreateControlProcedure,
+		svc.CreateControl,
+		connect.WithSchema(securityServiceMethods.ByName("CreateControl")),
+		connect.WithHandlerOptions(opts...),
+	)
+	securityServiceSearchControlsHandler := connect.NewUnaryHandler(
+		SecurityServiceSearchControlsProcedure,
+		svc.SearchControls,
+		connect.WithSchema(securityServiceMethods.ByName("SearchControls")),
+		connect.WithHandlerOptions(opts...),
+	)
+	securityServiceListUnmatchedTasksHandler := connect.NewUnaryHandler(
+		SecurityServiceListUnmatchedTasksProcedure,
+		svc.ListUnmatchedTasks,
+		connect.WithSchema(securityServiceMethods.ByName("ListUnmatchedTasks")),
+		connect.WithHandlerOptions(opts...),
+	)
+	securityServiceListFeedEventsHandler := connect.NewUnaryHandler(
+		SecurityServiceListFeedEventsProcedure,
+		svc.ListFeedEvents,
+		connect.WithSchema(securityServiceMethods.ByName("ListFeedEvents")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/security.v1.SecurityService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case SecurityServicePingProcedure:
 			securityServicePingHandler.ServeHTTP(w, r)
 		case SecurityServiceListControlsProcedure:
 			securityServiceListControlsHandler.ServeHTTP(w, r)
+		case SecurityServiceGetControlProcedure:
+			securityServiceGetControlHandler.ServeHTTP(w, r)
+		case SecurityServiceCreateControlProcedure:
+			securityServiceCreateControlHandler.ServeHTTP(w, r)
+		case SecurityServiceSearchControlsProcedure:
+			securityServiceSearchControlsHandler.ServeHTTP(w, r)
+		case SecurityServiceListUnmatchedTasksProcedure:
+			securityServiceListUnmatchedTasksHandler.ServeHTTP(w, r)
+		case SecurityServiceListFeedEventsProcedure:
+			securityServiceListFeedEventsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -138,4 +269,24 @@ func (UnimplementedSecurityServiceHandler) Ping(context.Context, *connect.Reques
 
 func (UnimplementedSecurityServiceHandler) ListControls(context.Context, *connect.Request[v1.ListControlsRequest]) (*connect.Response[v1.ListControlsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("security.v1.SecurityService.ListControls is not implemented"))
+}
+
+func (UnimplementedSecurityServiceHandler) GetControl(context.Context, *connect.Request[v1.GetControlRequest]) (*connect.Response[v1.GetControlResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("security.v1.SecurityService.GetControl is not implemented"))
+}
+
+func (UnimplementedSecurityServiceHandler) CreateControl(context.Context, *connect.Request[v1.CreateControlRequest]) (*connect.Response[v1.CreateControlResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("security.v1.SecurityService.CreateControl is not implemented"))
+}
+
+func (UnimplementedSecurityServiceHandler) SearchControls(context.Context, *connect.Request[v1.SearchControlsRequest]) (*connect.Response[v1.SearchControlsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("security.v1.SecurityService.SearchControls is not implemented"))
+}
+
+func (UnimplementedSecurityServiceHandler) ListUnmatchedTasks(context.Context, *connect.Request[v1.ListUnmatchedTasksRequest]) (*connect.Response[v1.ListUnmatchedTasksResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("security.v1.SecurityService.ListUnmatchedTasks is not implemented"))
+}
+
+func (UnimplementedSecurityServiceHandler) ListFeedEvents(context.Context, *connect.Request[v1.ListFeedEventsRequest]) (*connect.Response[v1.ListFeedEventsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("security.v1.SecurityService.ListFeedEvents is not implemented"))
 }
