@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -47,6 +48,7 @@ func (s *SecurityServer) GetControl(
 	row, err := s.queries.GetControl(ctx, req.Msg.Id)
 	if err != nil {
 		// pgx.ErrNoRows の場合は「見つからない」エラーを返す
+		log.Printf("DB取得失敗: %v\n", err)
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("control not found: %s", req.Msg.Id))
 	}
 
@@ -185,12 +187,12 @@ func (s *SecurityServer) ListControls(
 	// sqlcの一覧取得クエリを呼び出し
 	rows, err := s.queries.ListControls(ctx)
 	if err != nil {
+		// ↓↓↓ ここが超重要！ターミナルに本当のエラー原因を出力します ↓↓↓
+		log.Printf("[緊急エラー確認] DB取得失敗: %v\n", err)
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to fetch controls: %w", err))
 	}
 
-	// スライスの初期化（データが0件でもnilではなく空配列を返すようにする）
 	controls := make([]*securityv1.Control, 0, len(rows))
-
 	for _, row := range rows {
 		controls = append(controls, &securityv1.Control{
 			Id:       row.ID,
@@ -199,8 +201,6 @@ func (s *SecurityServer) ListControls(
 			Status:   row.Status,
 			Version:  fmt.Sprintf("%d", row.Version),
 			Tags:     row.Tags,
-			// 一覧画面では Question/Answer を省略しても良いですが、
-			// proto定義に含まれているなら入れておきます
 			Question: row.Question,
 			Answer:   row.Answer,
 		})
@@ -210,7 +210,6 @@ func (s *SecurityServer) ListControls(
 		Controls: controls,
 	}), nil
 }
-
 func startPubSubListener(projectID string, subID string) {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, projectID)
@@ -268,4 +267,113 @@ func main() {
 	if err := http.ListenAndServe(":8080", c.Handler(h2c.NewHandler(mux, &http2.Server{}))); err != nil {
 		fmt.Printf("Failed to start server: %v\n", err)
 	}
+}
+func (s *SecurityServer) UpdateControl(
+	ctx context.Context,
+	req *connect.Request[securityv1.UpdateControlRequest],
+) (*connect.Response[securityv1.UpdateControlResponse], error) {
+
+	// 1. トランザクション開始 (s.poolを使用)
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to begin tx: %w", err))
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := s.queries.WithTx(tx)
+
+	// 2. 変更前のデータを取得
+	oldControl, err := qtx.GetControl(ctx, req.Msg.Id)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("control not found: %w", err))
+	}
+
+	// 3. 古いタグをJSON文字列に変換
+	var oldTagsJSON []byte
+	if len(oldControl.Tags) > 0 {
+		oldTagsJSON, _ = json.Marshal(oldControl.Tags)
+	} else {
+		oldTagsJSON = []byte("[]")
+	}
+
+	// 4. 履歴（Control Version）の保存
+	_, err = qtx.CreateControlVersion(ctx, db.CreateControlVersionParams{
+		ControlID: pgtype.Text{String: oldControl.ID, Valid: true}, // pgtype.Text
+		Version:   oldControl.Version,
+		Title:     oldControl.Title,
+		Category:  oldControl.Category, // string
+		Tags:      oldTagsJSON,
+		Question:  oldControl.Question,
+		Answer:    oldControl.Answer,
+		CreatedBy: pgtype.Text{String: "system", Valid: true}, // pgtype.Text
+	})
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create version: %w", err))
+	}
+
+	// 5. Control本体の更新
+	updatedControl, err := qtx.UpdateControl(ctx, db.UpdateControlParams{
+		ID:       req.Msg.Id,
+		Title:    req.Msg.Title,
+		Category: req.Msg.Category,
+		Question: req.Msg.Question,
+		Answer:   req.Msg.Answer,
+		Status:   oldControl.Status,      // ← 追加：元のステータスを維持
+		Version:  oldControl.Version + 1, // ← 追加：バージョンをインクリメント
+	})
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to update control: %w", err))
+	}
+
+	// 6. タグの洗い替え
+	err = qtx.DeleteControlTags(ctx, req.Msg.Id)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to delete old tags: %w", err))
+	}
+
+	for _, tagName := range req.Msg.Tags {
+		// UpsertTagは tagID (int32) を直接返す
+		tagID, err := qtx.UpsertTag(ctx, tagName)
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to upsert tag: %w", err))
+		}
+		err = qtx.LinkControlTag(ctx, db.LinkControlTagParams{
+			ControlID: req.Msg.Id,
+			TagID:     tagID, // そのまま使う
+		})
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to link tag: %w", err))
+		}
+	}
+
+	// 7. フィードの記録
+	description := fmt.Sprintf("「%s」が更新されました (v%d → v%d)", updatedControl.Title, oldControl.Version, updatedControl.Version)
+	_, err = qtx.CreateFeedEvent(ctx, db.CreateFeedEventParams{
+		EventType:   db.FeedEventTypeUpdated,                       // カスタム型を使用
+		ControlID:   pgtype.Text{String: req.Msg.Id, Valid: true},  // pgtype.Text
+		UserName:    "system",                                      // string
+		Description: pgtype.Text{String: description, Valid: true}, // pgtype.Text
+	})
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create feed event: %w", err))
+	}
+
+	// 8. コミット
+	if err := tx.Commit(ctx); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to commit tx: %w", err))
+	}
+
+	// 9. レスポンス
+	return connect.NewResponse(&securityv1.UpdateControlResponse{
+		Control: &securityv1.Control{
+			Id:       updatedControl.ID,
+			Title:    updatedControl.Title,
+			Category: updatedControl.Category,
+			Status:   updatedControl.Status,
+			Version:  fmt.Sprintf("%d", updatedControl.Version),
+			Tags:     req.Msg.Tags,
+			Question: updatedControl.Question,
+			Answer:   updatedControl.Answer,
+		},
+	}), nil
 }

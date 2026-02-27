@@ -55,6 +55,53 @@ func (q *Queries) CreateControl(ctx context.Context, arg CreateControlParams) (C
 	return i, err
 }
 
+const createControlVersion = `-- name: CreateControlVersion :one
+INSERT INTO control_versions (
+    control_id, version, title, category, tags, question, answer, created_by
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8
+) RETURNING id, control_id, version, title, category, tags, question, answer, created_by, created_at
+`
+
+type CreateControlVersionParams struct {
+	ControlID pgtype.Text `json:"control_id"`
+	Version   int32       `json:"version"`
+	Title     string      `json:"title"`
+	Category  string      `json:"category"`
+	Tags      []byte      `json:"tags"`
+	Question  string      `json:"question"`
+	Answer    string      `json:"answer"`
+	CreatedBy pgtype.Text `json:"created_by"`
+}
+
+// 変更前のスナップショットを履歴として保存するためのクエリです
+func (q *Queries) CreateControlVersion(ctx context.Context, arg CreateControlVersionParams) (ControlVersion, error) {
+	row := q.db.QueryRow(ctx, createControlVersion,
+		arg.ControlID,
+		arg.Version,
+		arg.Title,
+		arg.Category,
+		arg.Tags,
+		arg.Question,
+		arg.Answer,
+		arg.CreatedBy,
+	)
+	var i ControlVersion
+	err := row.Scan(
+		&i.ID,
+		&i.ControlID,
+		&i.Version,
+		&i.Title,
+		&i.Category,
+		&i.Tags,
+		&i.Question,
+		&i.Answer,
+		&i.CreatedBy,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const deleteControl = `-- name: DeleteControl :exec
 DELETE FROM controls
 WHERE id = $1
@@ -62,6 +109,17 @@ WHERE id = $1
 
 func (q *Queries) DeleteControl(ctx context.Context, id string) error {
 	_, err := q.db.Exec(ctx, deleteControl, id)
+	return err
+}
+
+const deleteControlTags = `-- name: DeleteControlTags :exec
+DELETE FROM control_tags 
+WHERE control_id = $1
+`
+
+// 更新時に一度古いタグの紐付けを全てリセットするためのクエリです
+func (q *Queries) DeleteControlTags(ctx context.Context, controlID string) error {
+	_, err := q.db.Exec(ctx, deleteControlTags, controlID)
 	return err
 }
 

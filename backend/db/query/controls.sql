@@ -71,3 +71,16 @@ RETURNING id;
 INSERT INTO control_tags (control_id, tag_id) 
 VALUES ($1, $2) 
 ON CONFLICT DO NOTHING;
+
+-- name: DeleteControlTags :exec
+-- 更新時に一度古いタグの紐付けを全てリセットするためのクエリです
+DELETE FROM control_tags 
+WHERE control_id = $1;
+
+-- name: CreateControlVersion :one
+-- 変更前のスナップショットを履歴として保存するためのクエリです
+INSERT INTO control_versions (
+    control_id, version, title, category, tags, question, answer, created_by
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8
+) RETURNING *;

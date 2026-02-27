@@ -12,7 +12,13 @@ import (
 
 type Querier interface {
 	CreateControl(ctx context.Context, arg CreateControlParams) (Control, error)
+	// 変更前のスナップショットを履歴として保存するためのクエリです
+	CreateControlVersion(ctx context.Context, arg CreateControlVersionParams) (ControlVersion, error)
+	// 「誰が何を更新したか」をタイムラインに流すためのクエリです
+	CreateFeedEvent(ctx context.Context, arg CreateFeedEventParams) (FeedEvent, error)
 	DeleteControl(ctx context.Context, id string) error
+	// 更新時に一度古いタグの紐付けを全てリセットするためのクエリです
+	DeleteControlTags(ctx context.Context, controlID string) error
 	// backend/db/query/controls.sql
 	GetControl(ctx context.Context, id string) (GetControlRow, error)
 	LinkControlTag(ctx context.Context, arg LinkControlTagParams) error

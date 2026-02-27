@@ -17,6 +17,7 @@ service SecurityService {
   rpc ListControls (ListControlsRequest) returns (ListControlsResponse) {}
   rpc GetControl (GetControlRequest) returns (GetControlResponse) {}
   rpc CreateControl (CreateControlRequest) returns (CreateControlResponse) {}
+  rpc UpdateControl (UpdateControlRequest) returns (UpdateControlResponse) {}
 
   // 2. 検索API
   rpc SearchControls (SearchControlsRequest) returns (SearchControlsResponse) {}
@@ -114,7 +115,19 @@ message SearchControlsRequest {
 message SearchControlsResponse {
   repeated Control hits = 1;
 }
+message UpdateControlRequest {
+  string id = 1;
+  string title = 2;
+  string question = 3;
+  string answer = 4;
+  string category = 5;
+  repeated string tags = 6;
+  string updated_by = 7;
+}
 
+message UpdateControlResponse {
+  Control control = 1;
+}
 message ListUnmatchedTasksRequest {}
 message ListUnmatchedTasksResponse {
   repeated UnmatchedTask tasks = 1;
