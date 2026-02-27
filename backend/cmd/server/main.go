@@ -273,7 +273,6 @@ func (s *SecurityServer) UpdateControl(
 	req *connect.Request[securityv1.UpdateControlRequest],
 ) (*connect.Response[securityv1.UpdateControlResponse], error) {
 
-	// 1. トランザクション開始 (s.poolを使用)
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to begin tx: %w", err))
@@ -282,13 +281,11 @@ func (s *SecurityServer) UpdateControl(
 
 	qtx := s.queries.WithTx(tx)
 
-	// 2. 変更前のデータを取得
 	oldControl, err := qtx.GetControl(ctx, req.Msg.Id)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("control not found: %w", err))
 	}
 
-	// 3. 古いタグをJSON文字列に変換
 	var oldTagsJSON []byte
 	if len(oldControl.Tags) > 0 {
 		oldTagsJSON, _ = json.Marshal(oldControl.Tags)
@@ -296,74 +293,69 @@ func (s *SecurityServer) UpdateControl(
 		oldTagsJSON = []byte("[]")
 	}
 
-	// 4. 履歴（Control Version）の保存
+	// 履歴の保存
 	_, err = qtx.CreateControlVersion(ctx, db.CreateControlVersionParams{
-		ControlID: pgtype.Text{String: oldControl.ID, Valid: true}, // pgtype.Text
+		ControlID: pgtype.Text{String: oldControl.ID, Valid: true},
 		Version:   oldControl.Version,
 		Title:     oldControl.Title,
-		Category:  oldControl.Category, // string
+		Category:  oldControl.Category,
 		Tags:      oldTagsJSON,
 		Question:  oldControl.Question,
 		Answer:    oldControl.Answer,
-		CreatedBy: pgtype.Text{String: "system", Valid: true}, // pgtype.Text
+		CreatedBy: pgtype.Text{String: "system", Valid: true},
 	})
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create version: %w", err))
 	}
 
-	// 5. Control本体の更新
+	// 💡ここが一番重要です！古いバージョンに +1 して更新します
 	updatedControl, err := qtx.UpdateControl(ctx, db.UpdateControlParams{
 		ID:       req.Msg.Id,
 		Title:    req.Msg.Title,
 		Category: req.Msg.Category,
 		Question: req.Msg.Question,
 		Answer:   req.Msg.Answer,
-		Status:   oldControl.Status,      // ← 追加：元のステータスを維持
-		Version:  oldControl.Version + 1, // ← 追加：バージョンをインクリメント
+		Status:   oldControl.Status,      // 元のステータスを維持
+		Version:  oldControl.Version + 1, // バージョンを確実に上げる！
 	})
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to update control: %w", err))
 	}
 
-	// 6. タグの洗い替え
 	err = qtx.DeleteControlTags(ctx, req.Msg.Id)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to delete old tags: %w", err))
 	}
 
 	for _, tagName := range req.Msg.Tags {
-		// UpsertTagは tagID (int32) を直接返す
 		tagID, err := qtx.UpsertTag(ctx, tagName)
 		if err != nil {
 			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to upsert tag: %w", err))
 		}
 		err = qtx.LinkControlTag(ctx, db.LinkControlTagParams{
 			ControlID: req.Msg.Id,
-			TagID:     tagID, // そのまま使う
+			TagID:     tagID,
 		})
 		if err != nil {
 			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to link tag: %w", err))
 		}
 	}
 
-	// 7. フィードの記録
 	description := fmt.Sprintf("「%s」が更新されました (v%d → v%d)", updatedControl.Title, oldControl.Version, updatedControl.Version)
 	_, err = qtx.CreateFeedEvent(ctx, db.CreateFeedEventParams{
-		EventType:   db.FeedEventTypeUpdated,                       // カスタム型を使用
-		ControlID:   pgtype.Text{String: req.Msg.Id, Valid: true},  // pgtype.Text
-		UserName:    "system",                                      // string
-		Description: pgtype.Text{String: description, Valid: true}, // pgtype.Text
+		EventType:   db.FeedEventTypeUpdated,
+		ControlID:   pgtype.Text{String: req.Msg.Id, Valid: true},
+		UserName:    "system",
+		Description: pgtype.Text{String: description, Valid: true},
 	})
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create feed event: %w", err))
 	}
 
-	// 8. コミット
 	if err := tx.Commit(ctx); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to commit tx: %w", err))
 	}
 
-	// 9. レスポンス
 	return connect.NewResponse(&securityv1.UpdateControlResponse{
 		Control: &securityv1.Control{
 			Id:       updatedControl.ID,
