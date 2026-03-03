@@ -23,7 +23,7 @@ type Querier interface {
 	GetControl(ctx context.Context, id string) (GetControlRow, error)
 	LinkControlTag(ctx context.Context, arg LinkControlTagParams) error
 	ListControls(ctx context.Context) ([]ListControlsRow, error)
-	ListFeedEvents(ctx context.Context) ([]FeedEvent, error)
+	ListFeedEvents(ctx context.Context) ([]ListFeedEventsRow, error)
 	ListPendingUnmatchedTasks(ctx context.Context) ([]UnmatchedTask, error)
 	// 指定されたキーワード（$1）が、タイトル・質問・回答のどこかに含まれる Control を検索します
 	// db/query/search.sql

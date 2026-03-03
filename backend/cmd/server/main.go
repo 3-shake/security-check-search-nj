@@ -19,6 +19,7 @@ import (
 	"github.com/rs/cors"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	securityv1 "github.com/asuka-sakamoto/security-system/gen/proto/security/v1"
 	"github.com/asuka-sakamoto/security-system/gen/proto/security/v1/securityv1connect"
@@ -38,7 +39,22 @@ func (s *SecurityServer) Ping(
 		Message: "Pong: " + req.Msg.Message,
 	}), nil
 }
+func (s *SecurityServer) DeleteControl(
+	ctx context.Context,
+	req *connect.Request[securityv1.DeleteControlRequest],
+) (*connect.Response[securityv1.DeleteControlResponse], error) {
 
+	// DBから指定されたIDのControlを物理削除
+	err := s.queries.DeleteControl(ctx, req.Msg.Id)
+	if err != nil {
+		log.Printf("Failed to delete control: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, errors.New("failed to delete control"))
+	}
+
+	return connect.NewResponse(&securityv1.DeleteControlResponse{
+		Success: true,
+	}), nil
+}
 func (s *SecurityServer) GetControl(
 	ctx context.Context,
 	req *connect.Request[securityv1.GetControlRequest],
@@ -176,7 +192,45 @@ func (s *SecurityServer) ListUnmatchedTasks(ctx context.Context, req *connect.Re
 }
 
 func (s *SecurityServer) ListFeedEvents(ctx context.Context, req *connect.Request[securityv1.ListFeedEventsRequest]) (*connect.Response[securityv1.ListFeedEventsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("not implemented"))
+	rows, err := s.queries.ListFeedEvents(ctx)
+	if err != nil {
+		log.Printf("Failed to fetch feed events: %v\n", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to fetch feed events: %w", err))
+	}
+
+	events := make([]*securityv1.FeedEvent, 0, len(rows))
+	for _, row := range rows {
+		// ControlIDのNULLチェック
+		controlID := ""
+		if row.ControlID.Valid {
+			controlID = row.ControlID.String
+		}
+
+		// DescriptionのNULLチェック
+		description := ""
+		if row.Description.Valid {
+			description = row.Description.String
+		}
+
+		controlTitle := "削除されたControl" // デフォルト値（JOINに失敗した場合など）
+		if row.ControlTitle.Valid {
+			controlTitle = row.ControlTitle.String // NULLでなければ中身を使う
+		}
+
+		events = append(events, &securityv1.FeedEvent{
+			Id:           row.ID,
+			EventType:    string(row.EventType),
+			ControlId:    controlID,
+			UserName:     row.UserName,
+			Description:  description,
+			CreatedAt:    timestamppb.New(row.CreatedAt.Time),
+			ControlTitle: controlTitle, // ここでタイトルもセット
+		})
+	}
+
+	return connect.NewResponse(&securityv1.ListFeedEventsResponse{
+		Events: events,
+	}), nil
 }
 
 func (s *SecurityServer) ListControls(
@@ -236,6 +290,7 @@ func startPubSubListener(projectID string, subID string) {
 		fmt.Printf("Error receiving messages: %v\n", err)
 	}
 }
+
 func main() {
 	ctx := context.Background()
 

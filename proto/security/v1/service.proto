@@ -18,6 +18,7 @@ service SecurityService {
   rpc GetControl (GetControlRequest) returns (GetControlResponse) {}
   rpc CreateControl (CreateControlRequest) returns (CreateControlResponse) {}
   rpc UpdateControl (UpdateControlRequest) returns (UpdateControlResponse) {}
+  rpc DeleteControl(DeleteControlRequest) returns (DeleteControlResponse) {}
 
   // 2. 検索API
   rpc SearchControls (SearchControlsRequest) returns (SearchControlsResponse) {}
@@ -75,6 +76,7 @@ message FeedEvent {
   string user_name = 4;
   string description = 5;
   google.protobuf.Timestamp created_at = 6;
+  string control_title = 7;
 }
 
 // ---------------------------------------------------------
@@ -136,4 +138,11 @@ message ListUnmatchedTasksResponse {
 message ListFeedEventsRequest {}
 message ListFeedEventsResponse {
   repeated FeedEvent events = 1;
+}
+message DeleteControlRequest {
+  string id = 1;
+}
+
+message DeleteControlResponse {
+  bool success = 1;
 }

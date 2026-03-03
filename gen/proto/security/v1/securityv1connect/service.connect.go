@@ -47,6 +47,9 @@ const (
 	// SecurityServiceUpdateControlProcedure is the fully-qualified name of the SecurityService's
 	// UpdateControl RPC.
 	SecurityServiceUpdateControlProcedure = "/security.v1.SecurityService/UpdateControl"
+	// SecurityServiceDeleteControlProcedure is the fully-qualified name of the SecurityService's
+	// DeleteControl RPC.
+	SecurityServiceDeleteControlProcedure = "/security.v1.SecurityService/DeleteControl"
 	// SecurityServiceSearchControlsProcedure is the fully-qualified name of the SecurityService's
 	// SearchControls RPC.
 	SecurityServiceSearchControlsProcedure = "/security.v1.SecurityService/SearchControls"
@@ -67,6 +70,7 @@ type SecurityServiceClient interface {
 	GetControl(context.Context, *connect.Request[v1.GetControlRequest]) (*connect.Response[v1.GetControlResponse], error)
 	CreateControl(context.Context, *connect.Request[v1.CreateControlRequest]) (*connect.Response[v1.CreateControlResponse], error)
 	UpdateControl(context.Context, *connect.Request[v1.UpdateControlRequest]) (*connect.Response[v1.UpdateControlResponse], error)
+	DeleteControl(context.Context, *connect.Request[v1.DeleteControlRequest]) (*connect.Response[v1.DeleteControlResponse], error)
 	// 2. 検索API
 	SearchControls(context.Context, *connect.Request[v1.SearchControlsRequest]) (*connect.Response[v1.SearchControlsResponse], error)
 	// 3. 未マッチタスク（unmatched）API
@@ -116,6 +120,12 @@ func NewSecurityServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(securityServiceMethods.ByName("UpdateControl")),
 			connect.WithClientOptions(opts...),
 		),
+		deleteControl: connect.NewClient[v1.DeleteControlRequest, v1.DeleteControlResponse](
+			httpClient,
+			baseURL+SecurityServiceDeleteControlProcedure,
+			connect.WithSchema(securityServiceMethods.ByName("DeleteControl")),
+			connect.WithClientOptions(opts...),
+		),
 		searchControls: connect.NewClient[v1.SearchControlsRequest, v1.SearchControlsResponse](
 			httpClient,
 			baseURL+SecurityServiceSearchControlsProcedure,
@@ -144,6 +154,7 @@ type securityServiceClient struct {
 	getControl         *connect.Client[v1.GetControlRequest, v1.GetControlResponse]
 	createControl      *connect.Client[v1.CreateControlRequest, v1.CreateControlResponse]
 	updateControl      *connect.Client[v1.UpdateControlRequest, v1.UpdateControlResponse]
+	deleteControl      *connect.Client[v1.DeleteControlRequest, v1.DeleteControlResponse]
 	searchControls     *connect.Client[v1.SearchControlsRequest, v1.SearchControlsResponse]
 	listUnmatchedTasks *connect.Client[v1.ListUnmatchedTasksRequest, v1.ListUnmatchedTasksResponse]
 	listFeedEvents     *connect.Client[v1.ListFeedEventsRequest, v1.ListFeedEventsResponse]
@@ -174,6 +185,11 @@ func (c *securityServiceClient) UpdateControl(ctx context.Context, req *connect.
 	return c.updateControl.CallUnary(ctx, req)
 }
 
+// DeleteControl calls security.v1.SecurityService.DeleteControl.
+func (c *securityServiceClient) DeleteControl(ctx context.Context, req *connect.Request[v1.DeleteControlRequest]) (*connect.Response[v1.DeleteControlResponse], error) {
+	return c.deleteControl.CallUnary(ctx, req)
+}
+
 // SearchControls calls security.v1.SecurityService.SearchControls.
 func (c *securityServiceClient) SearchControls(ctx context.Context, req *connect.Request[v1.SearchControlsRequest]) (*connect.Response[v1.SearchControlsResponse], error) {
 	return c.searchControls.CallUnary(ctx, req)
@@ -198,6 +214,7 @@ type SecurityServiceHandler interface {
 	GetControl(context.Context, *connect.Request[v1.GetControlRequest]) (*connect.Response[v1.GetControlResponse], error)
 	CreateControl(context.Context, *connect.Request[v1.CreateControlRequest]) (*connect.Response[v1.CreateControlResponse], error)
 	UpdateControl(context.Context, *connect.Request[v1.UpdateControlRequest]) (*connect.Response[v1.UpdateControlResponse], error)
+	DeleteControl(context.Context, *connect.Request[v1.DeleteControlRequest]) (*connect.Response[v1.DeleteControlResponse], error)
 	// 2. 検索API
 	SearchControls(context.Context, *connect.Request[v1.SearchControlsRequest]) (*connect.Response[v1.SearchControlsResponse], error)
 	// 3. 未マッチタスク（unmatched）API
@@ -243,6 +260,12 @@ func NewSecurityServiceHandler(svc SecurityServiceHandler, opts ...connect.Handl
 		connect.WithSchema(securityServiceMethods.ByName("UpdateControl")),
 		connect.WithHandlerOptions(opts...),
 	)
+	securityServiceDeleteControlHandler := connect.NewUnaryHandler(
+		SecurityServiceDeleteControlProcedure,
+		svc.DeleteControl,
+		connect.WithSchema(securityServiceMethods.ByName("DeleteControl")),
+		connect.WithHandlerOptions(opts...),
+	)
 	securityServiceSearchControlsHandler := connect.NewUnaryHandler(
 		SecurityServiceSearchControlsProcedure,
 		svc.SearchControls,
@@ -273,6 +296,8 @@ func NewSecurityServiceHandler(svc SecurityServiceHandler, opts ...connect.Handl
 			securityServiceCreateControlHandler.ServeHTTP(w, r)
 		case SecurityServiceUpdateControlProcedure:
 			securityServiceUpdateControlHandler.ServeHTTP(w, r)
+		case SecurityServiceDeleteControlProcedure:
+			securityServiceDeleteControlHandler.ServeHTTP(w, r)
 		case SecurityServiceSearchControlsProcedure:
 			securityServiceSearchControlsHandler.ServeHTTP(w, r)
 		case SecurityServiceListUnmatchedTasksProcedure:
@@ -306,6 +331,10 @@ func (UnimplementedSecurityServiceHandler) CreateControl(context.Context, *conne
 
 func (UnimplementedSecurityServiceHandler) UpdateControl(context.Context, *connect.Request[v1.UpdateControlRequest]) (*connect.Response[v1.UpdateControlResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("security.v1.SecurityService.UpdateControl is not implemented"))
+}
+
+func (UnimplementedSecurityServiceHandler) DeleteControl(context.Context, *connect.Request[v1.DeleteControlRequest]) (*connect.Response[v1.DeleteControlResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("security.v1.SecurityService.DeleteControl is not implemented"))
 }
 
 func (UnimplementedSecurityServiceHandler) SearchControls(context.Context, *connect.Request[v1.SearchControlsRequest]) (*connect.Response[v1.SearchControlsResponse], error) {

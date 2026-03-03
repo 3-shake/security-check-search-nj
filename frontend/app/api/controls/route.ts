@@ -62,3 +62,38 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         return NextResponse.json({ error: 'Failed to update control' }, { status: 500 });
     }
 }
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    
+    // Goバックエンドの CreateControl メソッドを呼び出す
+    const response = await fetch(`http://localhost:8080/security.v1.SecurityService/CreateControl`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Connect-Protocol-Version': '1',
+      },
+      body: JSON.stringify({
+        title: body.title,
+        category: body.category,
+        question: body.question,
+        answer: body.answer,
+        tags: body.tags || [],
+        // created_by や updated_by はバックエンド側で処理される想定
+      }),
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[緊急エラー確認] バックエンドからの返答:', errorText);
+      throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error('Error creating control:', error);
+    return NextResponse.json({ error: 'Failed to create control' }, { status: 500 });
+  }
+}

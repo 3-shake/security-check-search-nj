@@ -47,20 +47,39 @@ func (q *Queries) CreateFeedEvent(ctx context.Context, arg CreateFeedEventParams
 }
 
 const listFeedEvents = `-- name: ListFeedEvents :many
-SELECT id, event_type, control_id, user_name, description, created_at FROM feed_events
-ORDER BY created_at DESC
+SELECT 
+    f.id,
+    f.event_type,
+    f.control_id,
+    f.user_name,
+    f.description,
+    f.created_at,
+    c.title as control_title  
+FROM feed_events f
+LEFT JOIN controls c ON f.control_id = c.id
+ORDER BY f.created_at DESC
 LIMIT 50
 `
 
-func (q *Queries) ListFeedEvents(ctx context.Context) ([]FeedEvent, error) {
+type ListFeedEventsRow struct {
+	ID           int32              `json:"id"`
+	EventType    FeedEventType      `json:"event_type"`
+	ControlID    pgtype.Text        `json:"control_id"`
+	UserName     string             `json:"user_name"`
+	Description  pgtype.Text        `json:"description"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	ControlTitle pgtype.Text        `json:"control_title"`
+}
+
+func (q *Queries) ListFeedEvents(ctx context.Context) ([]ListFeedEventsRow, error) {
 	rows, err := q.db.Query(ctx, listFeedEvents)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []FeedEvent
+	var items []ListFeedEventsRow
 	for rows.Next() {
-		var i FeedEvent
+		var i ListFeedEventsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.EventType,
@@ -68,6 +87,7 @@ func (q *Queries) ListFeedEvents(ctx context.Context) ([]FeedEvent, error) {
 			&i.UserName,
 			&i.Description,
 			&i.CreatedAt,
+			&i.ControlTitle,
 		); err != nil {
 			return nil, err
 		}

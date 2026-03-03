@@ -68,3 +68,32 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+export async function DELETE(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    
+    const { id } = await params;
+
+    try{
+    
+
+    const response = await fetch(`http://localhost:8080/security.v1.SecurityService/DeleteControl`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Connect-Protocol-Version': '1',
+        },
+        body: JSON.stringify({ id }),
+        cache: 'no-store',
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error('Failed to delete control: ' + errorText);
+    }
+    return NextResponse.json({ success: true });
+}catch (error) {
+    console.error(`Error deleting control ${id}:`, error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+}}

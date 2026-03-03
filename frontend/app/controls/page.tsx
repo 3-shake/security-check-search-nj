@@ -26,9 +26,12 @@ export default async function ControlsPage() {
           <p className="text-gray-600">登録されているすべてのセキュリティナレッジを管理します。</p>
         </div>
         <div>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+          <Link 
+            href="/controls/new" 
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
             <span>+ 新規Control作成</span>
-          </button>
+          </Link>
         </div>
       </div>
 

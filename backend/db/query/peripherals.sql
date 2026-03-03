@@ -4,8 +4,17 @@ WHERE status = 'pending'
 ORDER BY created_at ASC;
 
 -- name: ListFeedEvents :many
-SELECT * FROM feed_events
-ORDER BY created_at DESC
+SELECT 
+    f.id,
+    f.event_type,
+    f.control_id,
+    f.user_name,
+    f.description,
+    f.created_at,
+    c.title as control_title  
+FROM feed_events f
+LEFT JOIN controls c ON f.control_id = c.id
+ORDER BY f.created_at DESC
 LIMIT 50;
 -- name: CreateFeedEvent :one
 -- 「誰が何を更新したか」をタイムラインに流すためのクエリです

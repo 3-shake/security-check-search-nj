@@ -311,6 +311,7 @@ type FeedEvent struct {
 	UserName      string                 `protobuf:"bytes,4,opt,name=user_name,json=userName,proto3" json:"user_name,omitempty"`
 	Description   string                 `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	ControlTitle  string                 `protobuf:"bytes,7,opt,name=control_title,json=controlTitle,proto3" json:"control_title,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -385,6 +386,13 @@ func (x *FeedEvent) GetCreatedAt() *timestamppb.Timestamp {
 		return x.CreatedAt
 	}
 	return nil
+}
+
+func (x *FeedEvent) GetControlTitle() string {
+	if x != nil {
+		return x.ControlTitle
+	}
+	return ""
 }
 
 type PingRequest struct {
@@ -1163,6 +1171,94 @@ func (x *ListFeedEventsResponse) GetEvents() []*FeedEvent {
 	return nil
 }
 
+type DeleteControlRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteControlRequest) Reset() {
+	*x = DeleteControlRequest{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteControlRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteControlRequest) ProtoMessage() {}
+
+func (x *DeleteControlRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteControlRequest.ProtoReflect.Descriptor instead.
+func (*DeleteControlRequest) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *DeleteControlRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type DeleteControlResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteControlResponse) Reset() {
+	*x = DeleteControlResponse{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteControlResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteControlResponse) ProtoMessage() {}
+
+func (x *DeleteControlResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteControlResponse.ProtoReflect.Descriptor instead.
+func (*DeleteControlResponse) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *DeleteControlResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
 var File_proto_security_v1_service_proto protoreflect.FileDescriptor
 
 const file_proto_security_v1_service_proto_rawDesc = "" +
@@ -1199,7 +1295,7 @@ const file_proto_security_v1_service_proto_rawDesc = "" +
 	"\rquestion_text\x18\x04 \x01(\tR\fquestionText\x12\x16\n" +
 	"\x06status\x18\x05 \x01(\tR\x06status\x129\n" +
 	"\n" +
-	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xd3\x01\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xf8\x01\n" +
 	"\tFeedEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x1d\n" +
 	"\n" +
@@ -1209,7 +1305,8 @@ const file_proto_security_v1_service_proto_rawDesc = "" +
 	"\tuser_name\x18\x04 \x01(\tR\buserName\x12 \n" +
 	"\vdescription\x18\x05 \x01(\tR\vdescription\x129\n" +
 	"\n" +
-	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"'\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12#\n" +
+	"\rcontrol_title\x18\a \x01(\tR\fcontrolTitle\"'\n" +
 	"\vPingRequest\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\"(\n" +
 	"\fPingResponse\x12\x18\n" +
@@ -1252,14 +1349,19 @@ const file_proto_security_v1_service_proto_rawDesc = "" +
 	"\x05tasks\x18\x01 \x03(\v2\x1a.security.v1.UnmatchedTaskR\x05tasks\"\x17\n" +
 	"\x15ListFeedEventsRequest\"H\n" +
 	"\x16ListFeedEventsResponse\x12.\n" +
-	"\x06events\x18\x01 \x03(\v2\x16.security.v1.FeedEventR\x06events2\xcf\x05\n" +
+	"\x06events\x18\x01 \x03(\v2\x16.security.v1.FeedEventR\x06events\"&\n" +
+	"\x14DeleteControlRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"1\n" +
+	"\x15DeleteControlResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xa9\x06\n" +
 	"\x0fSecurityService\x12=\n" +
 	"\x04Ping\x12\x18.security.v1.PingRequest\x1a\x19.security.v1.PingResponse\"\x00\x12U\n" +
 	"\fListControls\x12 .security.v1.ListControlsRequest\x1a!.security.v1.ListControlsResponse\"\x00\x12O\n" +
 	"\n" +
 	"GetControl\x12\x1e.security.v1.GetControlRequest\x1a\x1f.security.v1.GetControlResponse\"\x00\x12X\n" +
 	"\rCreateControl\x12!.security.v1.CreateControlRequest\x1a\".security.v1.CreateControlResponse\"\x00\x12X\n" +
-	"\rUpdateControl\x12!.security.v1.UpdateControlRequest\x1a\".security.v1.UpdateControlResponse\"\x00\x12[\n" +
+	"\rUpdateControl\x12!.security.v1.UpdateControlRequest\x1a\".security.v1.UpdateControlResponse\"\x00\x12X\n" +
+	"\rDeleteControl\x12!.security.v1.DeleteControlRequest\x1a\".security.v1.DeleteControlResponse\"\x00\x12[\n" +
 	"\x0eSearchControls\x12\".security.v1.SearchControlsRequest\x1a#.security.v1.SearchControlsResponse\"\x00\x12g\n" +
 	"\x12ListUnmatchedTasks\x12&.security.v1.ListUnmatchedTasksRequest\x1a'.security.v1.ListUnmatchedTasksResponse\"\x00\x12[\n" +
 	"\x0eListFeedEvents\x12\".security.v1.ListFeedEventsRequest\x1a#.security.v1.ListFeedEventsResponse\"\x00BLZJgithub.com/asuka-sakamoto/security-system/gen/proto/security/v1;securityv1b\x06proto3"
@@ -1276,7 +1378,7 @@ func file_proto_security_v1_service_proto_rawDescGZIP() []byte {
 	return file_proto_security_v1_service_proto_rawDescData
 }
 
-var file_proto_security_v1_service_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_proto_security_v1_service_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_proto_security_v1_service_proto_goTypes = []any{
 	(*Control)(nil),                    // 0: security.v1.Control
 	(*ControlVersion)(nil),             // 1: security.v1.ControlVersion
@@ -1298,13 +1400,15 @@ var file_proto_security_v1_service_proto_goTypes = []any{
 	(*ListUnmatchedTasksResponse)(nil), // 17: security.v1.ListUnmatchedTasksResponse
 	(*ListFeedEventsRequest)(nil),      // 18: security.v1.ListFeedEventsRequest
 	(*ListFeedEventsResponse)(nil),     // 19: security.v1.ListFeedEventsResponse
-	(*timestamppb.Timestamp)(nil),      // 20: google.protobuf.Timestamp
+	(*DeleteControlRequest)(nil),       // 20: security.v1.DeleteControlRequest
+	(*DeleteControlResponse)(nil),      // 21: security.v1.DeleteControlResponse
+	(*timestamppb.Timestamp)(nil),      // 22: google.protobuf.Timestamp
 }
 var file_proto_security_v1_service_proto_depIdxs = []int32{
-	20, // 0: security.v1.Control.updated_at:type_name -> google.protobuf.Timestamp
-	20, // 1: security.v1.ControlVersion.changed_at:type_name -> google.protobuf.Timestamp
-	20, // 2: security.v1.UnmatchedTask.created_at:type_name -> google.protobuf.Timestamp
-	20, // 3: security.v1.FeedEvent.created_at:type_name -> google.protobuf.Timestamp
+	22, // 0: security.v1.Control.updated_at:type_name -> google.protobuf.Timestamp
+	22, // 1: security.v1.ControlVersion.changed_at:type_name -> google.protobuf.Timestamp
+	22, // 2: security.v1.UnmatchedTask.created_at:type_name -> google.protobuf.Timestamp
+	22, // 3: security.v1.FeedEvent.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 4: security.v1.ListControlsResponse.controls:type_name -> security.v1.Control
 	0,  // 5: security.v1.GetControlResponse.control:type_name -> security.v1.Control
 	1,  // 6: security.v1.GetControlResponse.history:type_name -> security.v1.ControlVersion
@@ -1318,19 +1422,21 @@ var file_proto_security_v1_service_proto_depIdxs = []int32{
 	8,  // 14: security.v1.SecurityService.GetControl:input_type -> security.v1.GetControlRequest
 	10, // 15: security.v1.SecurityService.CreateControl:input_type -> security.v1.CreateControlRequest
 	14, // 16: security.v1.SecurityService.UpdateControl:input_type -> security.v1.UpdateControlRequest
-	12, // 17: security.v1.SecurityService.SearchControls:input_type -> security.v1.SearchControlsRequest
-	16, // 18: security.v1.SecurityService.ListUnmatchedTasks:input_type -> security.v1.ListUnmatchedTasksRequest
-	18, // 19: security.v1.SecurityService.ListFeedEvents:input_type -> security.v1.ListFeedEventsRequest
-	5,  // 20: security.v1.SecurityService.Ping:output_type -> security.v1.PingResponse
-	7,  // 21: security.v1.SecurityService.ListControls:output_type -> security.v1.ListControlsResponse
-	9,  // 22: security.v1.SecurityService.GetControl:output_type -> security.v1.GetControlResponse
-	11, // 23: security.v1.SecurityService.CreateControl:output_type -> security.v1.CreateControlResponse
-	15, // 24: security.v1.SecurityService.UpdateControl:output_type -> security.v1.UpdateControlResponse
-	13, // 25: security.v1.SecurityService.SearchControls:output_type -> security.v1.SearchControlsResponse
-	17, // 26: security.v1.SecurityService.ListUnmatchedTasks:output_type -> security.v1.ListUnmatchedTasksResponse
-	19, // 27: security.v1.SecurityService.ListFeedEvents:output_type -> security.v1.ListFeedEventsResponse
-	20, // [20:28] is the sub-list for method output_type
-	12, // [12:20] is the sub-list for method input_type
+	20, // 17: security.v1.SecurityService.DeleteControl:input_type -> security.v1.DeleteControlRequest
+	12, // 18: security.v1.SecurityService.SearchControls:input_type -> security.v1.SearchControlsRequest
+	16, // 19: security.v1.SecurityService.ListUnmatchedTasks:input_type -> security.v1.ListUnmatchedTasksRequest
+	18, // 20: security.v1.SecurityService.ListFeedEvents:input_type -> security.v1.ListFeedEventsRequest
+	5,  // 21: security.v1.SecurityService.Ping:output_type -> security.v1.PingResponse
+	7,  // 22: security.v1.SecurityService.ListControls:output_type -> security.v1.ListControlsResponse
+	9,  // 23: security.v1.SecurityService.GetControl:output_type -> security.v1.GetControlResponse
+	11, // 24: security.v1.SecurityService.CreateControl:output_type -> security.v1.CreateControlResponse
+	15, // 25: security.v1.SecurityService.UpdateControl:output_type -> security.v1.UpdateControlResponse
+	21, // 26: security.v1.SecurityService.DeleteControl:output_type -> security.v1.DeleteControlResponse
+	13, // 27: security.v1.SecurityService.SearchControls:output_type -> security.v1.SearchControlsResponse
+	17, // 28: security.v1.SecurityService.ListUnmatchedTasks:output_type -> security.v1.ListUnmatchedTasksResponse
+	19, // 29: security.v1.SecurityService.ListFeedEvents:output_type -> security.v1.ListFeedEventsResponse
+	21, // [21:30] is the sub-list for method output_type
+	12, // [12:21] is the sub-list for method input_type
 	12, // [12:12] is the sub-list for extension type_name
 	12, // [12:12] is the sub-list for extension extendee
 	0,  // [0:12] is the sub-list for field type_name
@@ -1347,7 +1453,7 @@ func file_proto_security_v1_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_security_v1_service_proto_rawDesc), len(file_proto_security_v1_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   20,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

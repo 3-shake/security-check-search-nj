@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { use, useState, useEffect } from "react";
-
+import { useRouter } from "next/navigation";
 // APIから返ってくるデータの型定義
 type Control = {
   id: string;
@@ -16,6 +16,7 @@ type Control = {
 };
 
 export default function ControlsDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const router = useRouter();
   // Next.js 15の仕様に合わせ、paramsをuse()で展開
   const { id: controlId } = use(params);
 
@@ -25,6 +26,7 @@ export default function ControlsDetailPage({ params }: { params: Promise<{ id: s
   const [formData, setFormData] = useState<Partial<Control>>({}); // フォームの入力内容
   const [isLoading, setIsLoading] = useState(true);
   const [tagInput, setTagInput] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // 1. 初回マウント時にDBから本物のデータを取得 (GET)
   useEffect(() => {
@@ -72,6 +74,29 @@ export default function ControlsDetailPage({ params }: { params: Promise<{ id: s
       alert("エラーが発生しました");
     }
   };
+  const handleDelete = async () => {
+    if (!window.confirm("本当にこのControlを削除しますか？この操作は取り消せません。")) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const { id } = await params;
+      const res = await fetch(`/api/controls/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("削除に失敗しました");
+
+      alert("削除しました。");
+      router.push("/controls"); // 削除後は一覧画面へ戻る
+      router.refresh(); // 最新の一覧を取得
+    } catch (error) {
+      console.error(error);
+      alert("エラーが発生しました。");
+      setIsDeleting(false);
+    }
+  };
 
   // 読み込み中・エラー時の表示
   if (isLoading) return <div className="text-center mt-10 text-gray-500">読み込み中...</div>;
@@ -117,24 +142,36 @@ export default function ControlsDetailPage({ params }: { params: Promise<{ id: s
             <div className="flex gap-2">
               <button 
                 onClick={() => { setIsEditing(false); setFormData(control); }} 
-                className="text-gray-600 px-4 py-2 text-sm font-medium hover:bg-gray-50 rounded"
+                className="text-gray-600 px-4 py-2 text-sm font-medium hover:bg-gray-50 rounded transition-colors"
               >
                 キャンセル
               </button>
               <button 
                 onClick={handleSave} 
-                className="bg-blue-600 text-white px-4 py-2 rounded shadow-sm hover:bg-blue-700 text-sm font-medium"
+                className="bg-blue-600 text-white px-4 py-2 rounded shadow-sm hover:bg-blue-700 text-sm font-medium transition-colors"
               >
                 保存する
               </button>
             </div>
           ) : (
-            <button 
-              onClick={() => { setIsEditing(true); setTagInput(control.tags ? control.tags.join(", ") : ""); }}
-              className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded shadow-sm hover:bg-gray-50 text-sm font-medium"
-            >
-              編集する
-            </button>
+            
+            <div className="flex gap-2">
+              <button 
+                onClick={() => { setIsEditing(true); setTagInput(control.tags ? control.tags.join(", ") : ""); }}
+                className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded shadow-sm hover:bg-gray-50 text-sm font-medium transition-colors box-border"
+              >
+                編集する
+              </button>
+              
+              <button 
+                onClick={handleDelete}
+                disabled={isDeleting}
+                
+                className="bg-red-500 border border-transparent text-white px-4 py-2 rounded shadow-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50 text-sm box-border"
+              >
+                {isDeleting ? "削除中..." : "削除する"}
+              </button>
+            </div>
           )}
         </div>
 
