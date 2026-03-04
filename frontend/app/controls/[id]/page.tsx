@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 // APIから返ってくるデータの型定義
 type Control = {
   id: string;
@@ -68,7 +69,7 @@ export default function ControlsDetailPage({ params }: { params: Promise<{ id: s
       const updatedData = await res.json();
       setControl(updatedData.control); // 画面のデータを最新化
       setIsEditing(false); // 閲覧モードに戻す
-      alert("更新が完了しました！ (バージョンが上がりました)");
+      toast.success("更新が完了しました！ (バージョンが上がりました)");
     } catch (error) {
       console.error(error);
       alert("エラーが発生しました");
@@ -88,12 +89,12 @@ export default function ControlsDetailPage({ params }: { params: Promise<{ id: s
 
       if (!res.ok) throw new Error("削除に失敗しました");
 
-      alert("削除しました。");
+      toast.success("削除しました。");
       router.push("/controls"); // 削除後は一覧画面へ戻る
       router.refresh(); // 最新の一覧を取得
     } catch (error) {
       console.error(error);
-      alert("エラーが発生しました。");
+      toast.error("エラーが発生しました。");
       setIsDeleting(false);
     }
   };

@@ -101,11 +101,11 @@ message GetControlResponse {
 
 message CreateControlRequest {
   string title = 1;
-  string question = 2;
-  string answer = 3;
-  string category = 4;
-  repeated string tags = 5;
-  string updated_by = 6;
+  string category = 2;
+  repeated string tags = 3;
+  string question = 4;
+  string answer = 5;
+  string unmatched_task_id = 6; // ★ これを追加
 }
 message CreateControlResponse {
   Control control = 1;

@@ -1,8 +1,8 @@
 -- name: ListPendingUnmatchedTasks :many
 SELECT * FROM unmatched_tasks
 WHERE status = 'pending'
-ORDER BY created_at ASC;
-
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2;
 -- name: ListFeedEvents :many
 SELECT 
     f.id,
@@ -23,3 +23,15 @@ INSERT INTO feed_events (
 ) VALUES (
     $1, $2, $3, $4
 ) RETURNING *;
+-- name: CreateUnmatchedTask :one
+-- CSVから読み取った質問を保存するクエリです
+INSERT INTO unmatched_tasks (
+    original_file_name, row_number, question_text, status
+) VALUES (
+    $1, $2, $3, 'pending'
+) RETURNING *;
+
+-- name: UpdateUnmatchedTaskStatus :exec
+UPDATE unmatched_tasks
+SET status = $2
+WHERE id = $1;

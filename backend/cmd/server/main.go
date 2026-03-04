@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"encoding/csv" // 追加
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io" // 追加
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/asuka-sakamoto/security-system/backend/db"
 	"github.com/google/uuid"
@@ -15,10 +18,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"cloud.google.com/go/pubsub/v2"
+	"cloud.google.com/go/storage" // 追加
 	"connectrpc.com/connect"
 	"github.com/rs/cors"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"golang.org/x/text/encoding/japanese" // 追加
+	"golang.org/x/text/transform"         // 追加
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	securityv1 "github.com/asuka-sakamoto/security-system/gen/proto/security/v1"
@@ -132,6 +138,30 @@ func (s *SecurityServer) CreateControl(ctx context.Context, req *connect.Request
 			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to link tag '%s': %w", tagName, err))
 		}
 	}
+	if req.Msg.UnmatchedTaskId != "" {
+		// 文字列で送られてきたIDを数値(int32)に変換
+		taskIDInt, err := strconv.Atoi(req.Msg.UnmatchedTaskId)
+		if err == nil {
+			// トランザクション (qtx) を使って更新
+			updateErr := qtx.UpdateUnmatchedTaskStatus(ctx, db.UpdateUnmatchedTaskStatusParams{
+				ID: int32(taskIDInt),
+				// db.NullUnmatchedStatus 型に合わせて設定
+				Status: db.NullUnmatchedStatus{
+					UnmatchedStatus: db.UnmatchedStatus("completed"), // "completed" に更新
+					Valid:           true,
+				},
+			})
+			if updateErr != nil {
+				// ステータス更新失敗時はトランザクションごとロールバック（エラーを返す）
+				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to update unmatched task status: %w", updateErr))
+			}
+			log.Printf(" 未マッチタスク (ID: %d) を completed に更新しました", taskIDInt)
+		} else {
+			log.Printf("警告: 不正な UnmatchedTaskId フォーマット (%s): %v", req.Msg.UnmatchedTaskId, err)
+			// ID形式が不正な場合は、無視してControl作成だけは続行するか、エラーにするか選べます。
+			// 今回はログだけ出して続行する形にしています。
+		}
+	}
 
 	// 5. すべて成功したらコミット（確定）
 	if err := tx.Commit(ctx); err != nil {
@@ -187,8 +217,40 @@ func (s *SecurityServer) SearchControls(
 	}), nil
 }
 
-func (s *SecurityServer) ListUnmatchedTasks(ctx context.Context, req *connect.Request[securityv1.ListUnmatchedTasksRequest]) (*connect.Response[securityv1.ListUnmatchedTasksResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("not implemented"))
+func (s *SecurityServer) ListUnmatchedTasks(
+	ctx context.Context,
+	req *connect.Request[securityv1.ListUnmatchedTasksRequest],
+) (*connect.Response[securityv1.ListUnmatchedTasksResponse], error) {
+
+	// DB クエリ実行用の Querier を作成
+	querier := db.New(s.pool)
+
+	// DB から pending 状態の未マッチタスクを 50 件取得（Limit: 50, Offset: 0）
+	dbTasks, err := querier.ListPendingUnmatchedTasks(ctx, db.ListPendingUnmatchedTasksParams{
+		Limit:  50,
+		Offset: 0,
+	})
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to fetch unmatched tasks: %v", err))
+	}
+
+	// DB の結果を Protocol Buffers の型に変換
+	var protoTasks []*securityv1.UnmatchedTask
+	for _, t := range dbTasks {
+		protoTasks = append(protoTasks, &securityv1.UnmatchedTask{
+			Id:               t.ID,
+			OriginalFileName: t.OriginalFileName,
+			RowNumber:        t.RowNumber,
+			QuestionText:     t.QuestionText,
+			Status:           string(t.Status.UnmatchedStatus),
+		})
+	}
+
+	// レスポンスを返す
+	res := connect.NewResponse(&securityv1.ListUnmatchedTasksResponse{
+		Tasks: protoTasks,
+	})
+	return res, nil
 }
 
 func (s *SecurityServer) ListFeedEvents(ctx context.Context, req *connect.Request[securityv1.ListFeedEventsRequest]) (*connect.Response[securityv1.ListFeedEventsResponse], error) {
@@ -264,8 +326,10 @@ func (s *SecurityServer) ListControls(
 		Controls: controls,
 	}), nil
 }
-func startPubSubListener(projectID string, subID string) {
+func startPubSubListener(projectID string, subID string, dbPool *pgxpool.Pool) {
 	ctx := context.Background()
+
+	// Pub/Sub クライアントの作成
 	client, err := pubsub.NewClient(ctx, projectID)
 	if err != nil {
 		fmt.Printf("Failed to create Pub/Sub client: %v\n", err)
@@ -273,22 +337,106 @@ func startPubSubListener(projectID string, subID string) {
 	}
 	defer client.Close()
 
+	// GCS クライアントの作成（追加）
+	storageClient, err := storage.NewClient(ctx)
+	if err != nil {
+		fmt.Printf("Failed to create Storage client: %v\n", err)
+		return
+	}
+	defer storageClient.Close()
+
 	sub := client.Subscriber(subID)
 	log.Printf("Listening for messages on subscription: %s\n", subID)
 	err = sub.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
 		fileName := msg.Attributes["objectId"]
 		eventType := msg.Attributes["eventType"]
+		bucketId := msg.Attributes["bucketId"] // GCSからの通知にはバケット名が含まれます
+
 		if eventType == "OBJECT_FINALIZE" {
-			log.Printf("New file uploaded: %s\n", fileName)
-			// ここでファイル処理のロジックを実装
+			log.Printf("New file uploaded: %s (Bucket: %s)\n", fileName, bucketId)
+
+			// ★ 非同期でファイルのダウンロードと解析を実行
+			go func() {
+				err := processUploadedCSV(context.Background(), storageClient, bucketId, fileName, dbPool)
+				if err != nil {
+					log.Printf(" CSV処理エラー (%s): %v\n", fileName, err)
+				}
+			}()
 		} else {
 			log.Printf("Received non-finalize event: %s for file: %s\n", eventType, fileName)
 		}
+		// メッセージの処理が完了したらAck（確認応答）を返す
 		msg.Ack()
 	})
 	if err != nil {
 		fmt.Printf("Error receiving messages: %v\n", err)
 	}
+}
+
+func processUploadedCSV(ctx context.Context, client *storage.Client, bucketName, fileName string, dbPool *pgxpool.Pool) error {
+	log.Printf("%s から %s をダウンロード中...\n", bucketName, fileName)
+
+	// GCSからオブジェクトを読み取る
+	rc, err := client.Bucket(bucketName).Object(fileName).NewReader(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to read object from GCS: %w", err)
+	}
+	defer rc.Close()
+
+	// 日本語ExcelのShift-JISをUTF-8に変換
+	utf8Reader := transform.NewReader(rc, japanese.ShiftJIS.NewDecoder())
+	csvReader := csv.NewReader(utf8Reader)
+	csvReader.FieldsPerRecord = -1
+
+	// SQL生成用のQuerierを準備
+	querier := db.New(dbPool)
+
+	rowCount := 0
+	savedCount := 0
+
+	log.Printf(" %s の解析とDB保存を開始します...", fileName)
+
+	for {
+		record, err := csvReader.Read()
+		if err == io.EOF {
+			break // ファイルの終端
+		}
+		if err != nil {
+			return fmt.Errorf("failed to parse CSV at line %d: %w", rowCount+1, err)
+		}
+
+		rowCount++
+
+		// 1. 1行目（ヘッダー）は保存せずにスキップ
+		if rowCount == 1 {
+			continue
+		}
+
+		// 2. CSVのどの列に「質問」が入っているかを確認
+		// ここでは index 0 (1列目) を質問文として扱います
+		// もし2列目なら record[1] に変更してください
+		var questionText string
+		if len(record) >= 3 {
+			questionText = record[2] // 0, 1, 2番目が「質問内容」
+		}
+
+		// 3. 質問文が空でなければDBに保存
+		if questionText != "" {
+			_, err := querier.CreateUnmatchedTask(ctx, db.CreateUnmatchedTaskParams{
+				OriginalFileName: fileName,
+				RowNumber:        int32(rowCount),
+				QuestionText:     questionText,
+			})
+			if err != nil {
+				log.Printf(" 行 %d の保存に失敗: %v\n", rowCount, err)
+			} else {
+				savedCount++
+			}
+		}
+	}
+
+	log.Printf(" %s の処理が完了しました（総行数: %d, DB保存数: %d）\n", fileName, rowCount, savedCount)
+	return nil
 }
 
 func main() {
@@ -311,7 +459,7 @@ func main() {
 	mux := http.NewServeMux()
 	pathName, handler := securityv1connect.NewSecurityServiceHandler(securityServer)
 	mux.Handle(pathName, handler)
-	go startPubSubListener("welcome-study-sakamoto", "ingestion-subscription")
+	go startPubSubListener("welcome-study-sakamoto", "ingestion-subscription", pool)
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"http://localhost:3000"},
 		AllowedMethods: []string{"POST", "OPTIONS"},
@@ -363,7 +511,6 @@ func (s *SecurityServer) UpdateControl(
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create version: %w", err))
 	}
 
-	// 💡ここが一番重要です！古いバージョンに +1 して更新します
 	updatedControl, err := qtx.UpdateControl(ctx, db.UpdateControlParams{
 		ID:       req.Msg.Id,
 		Title:    req.Msg.Title,

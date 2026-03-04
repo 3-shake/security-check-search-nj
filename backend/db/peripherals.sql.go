@@ -46,6 +46,36 @@ func (q *Queries) CreateFeedEvent(ctx context.Context, arg CreateFeedEventParams
 	return i, err
 }
 
+const createUnmatchedTask = `-- name: CreateUnmatchedTask :one
+INSERT INTO unmatched_tasks (
+    original_file_name, row_number, question_text, status
+) VALUES (
+    $1, $2, $3, 'pending'
+) RETURNING id, original_file_name, row_number, question_text, status, created_at, resolved_at
+`
+
+type CreateUnmatchedTaskParams struct {
+	OriginalFileName string `json:"original_file_name"`
+	RowNumber        int32  `json:"row_number"`
+	QuestionText     string `json:"question_text"`
+}
+
+// CSVから読み取った質問を保存するクエリです
+func (q *Queries) CreateUnmatchedTask(ctx context.Context, arg CreateUnmatchedTaskParams) (UnmatchedTask, error) {
+	row := q.db.QueryRow(ctx, createUnmatchedTask, arg.OriginalFileName, arg.RowNumber, arg.QuestionText)
+	var i UnmatchedTask
+	err := row.Scan(
+		&i.ID,
+		&i.OriginalFileName,
+		&i.RowNumber,
+		&i.QuestionText,
+		&i.Status,
+		&i.CreatedAt,
+		&i.ResolvedAt,
+	)
+	return i, err
+}
+
 const listFeedEvents = `-- name: ListFeedEvents :many
 SELECT 
     f.id,
@@ -102,11 +132,17 @@ func (q *Queries) ListFeedEvents(ctx context.Context) ([]ListFeedEventsRow, erro
 const listPendingUnmatchedTasks = `-- name: ListPendingUnmatchedTasks :many
 SELECT id, original_file_name, row_number, question_text, status, created_at, resolved_at FROM unmatched_tasks
 WHERE status = 'pending'
-ORDER BY created_at ASC
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
 `
 
-func (q *Queries) ListPendingUnmatchedTasks(ctx context.Context) ([]UnmatchedTask, error) {
-	rows, err := q.db.Query(ctx, listPendingUnmatchedTasks)
+type ListPendingUnmatchedTasksParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListPendingUnmatchedTasks(ctx context.Context, arg ListPendingUnmatchedTasksParams) ([]UnmatchedTask, error) {
+	rows, err := q.db.Query(ctx, listPendingUnmatchedTasks, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -131,4 +167,20 @@ func (q *Queries) ListPendingUnmatchedTasks(ctx context.Context) ([]UnmatchedTas
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateUnmatchedTaskStatus = `-- name: UpdateUnmatchedTaskStatus :exec
+UPDATE unmatched_tasks
+SET status = $2
+WHERE id = $1
+`
+
+type UpdateUnmatchedTaskStatusParams struct {
+	ID     int32               `json:"id"`
+	Status NullUnmatchedStatus `json:"status"`
+}
+
+func (q *Queries) UpdateUnmatchedTaskStatus(ctx context.Context, arg UpdateUnmatchedTaskStatusParams) error {
+	_, err := q.db.Exec(ctx, updateUnmatchedTaskStatus, arg.ID, arg.Status)
+	return err
 }

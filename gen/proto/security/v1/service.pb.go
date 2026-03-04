@@ -660,15 +660,15 @@ func (x *GetControlResponse) GetHistory() []*ControlVersion {
 }
 
 type CreateControlRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	Question      string                 `protobuf:"bytes,2,opt,name=question,proto3" json:"question,omitempty"`
-	Answer        string                 `protobuf:"bytes,3,opt,name=answer,proto3" json:"answer,omitempty"`
-	Category      string                 `protobuf:"bytes,4,opt,name=category,proto3" json:"category,omitempty"`
-	Tags          []string               `protobuf:"bytes,5,rep,name=tags,proto3" json:"tags,omitempty"`
-	UpdatedBy     string                 `protobuf:"bytes,6,opt,name=updated_by,json=updatedBy,proto3" json:"updated_by,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Title           string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Category        string                 `protobuf:"bytes,2,opt,name=category,proto3" json:"category,omitempty"`
+	Tags            []string               `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty"`
+	Question        string                 `protobuf:"bytes,4,opt,name=question,proto3" json:"question,omitempty"`
+	Answer          string                 `protobuf:"bytes,5,opt,name=answer,proto3" json:"answer,omitempty"`
+	UnmatchedTaskId string                 `protobuf:"bytes,6,opt,name=unmatched_task_id,json=unmatchedTaskId,proto3" json:"unmatched_task_id,omitempty"` // ★ これを追加
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *CreateControlRequest) Reset() {
@@ -708,20 +708,6 @@ func (x *CreateControlRequest) GetTitle() string {
 	return ""
 }
 
-func (x *CreateControlRequest) GetQuestion() string {
-	if x != nil {
-		return x.Question
-	}
-	return ""
-}
-
-func (x *CreateControlRequest) GetAnswer() string {
-	if x != nil {
-		return x.Answer
-	}
-	return ""
-}
-
 func (x *CreateControlRequest) GetCategory() string {
 	if x != nil {
 		return x.Category
@@ -736,9 +722,23 @@ func (x *CreateControlRequest) GetTags() []string {
 	return nil
 }
 
-func (x *CreateControlRequest) GetUpdatedBy() string {
+func (x *CreateControlRequest) GetQuestion() string {
 	if x != nil {
-		return x.UpdatedBy
+		return x.Question
+	}
+	return ""
+}
+
+func (x *CreateControlRequest) GetAnswer() string {
+	if x != nil {
+		return x.Answer
+	}
+	return ""
+}
+
+func (x *CreateControlRequest) GetUnmatchedTaskId() string {
+	if x != nil {
+		return x.UnmatchedTaskId
 	}
 	return ""
 }
@@ -1318,15 +1318,14 @@ const file_proto_security_v1_service_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"{\n" +
 	"\x12GetControlResponse\x12.\n" +
 	"\acontrol\x18\x01 \x01(\v2\x14.security.v1.ControlR\acontrol\x125\n" +
-	"\ahistory\x18\x02 \x03(\v2\x1b.security.v1.ControlVersionR\ahistory\"\xaf\x01\n" +
+	"\ahistory\x18\x02 \x03(\v2\x1b.security.v1.ControlVersionR\ahistory\"\xbc\x01\n" +
 	"\x14CreateControlRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x1a\n" +
-	"\bquestion\x18\x02 \x01(\tR\bquestion\x12\x16\n" +
-	"\x06answer\x18\x03 \x01(\tR\x06answer\x12\x1a\n" +
-	"\bcategory\x18\x04 \x01(\tR\bcategory\x12\x12\n" +
-	"\x04tags\x18\x05 \x03(\tR\x04tags\x12\x1d\n" +
-	"\n" +
-	"updated_by\x18\x06 \x01(\tR\tupdatedBy\"G\n" +
+	"\bcategory\x18\x02 \x01(\tR\bcategory\x12\x12\n" +
+	"\x04tags\x18\x03 \x03(\tR\x04tags\x12\x1a\n" +
+	"\bquestion\x18\x04 \x01(\tR\bquestion\x12\x16\n" +
+	"\x06answer\x18\x05 \x01(\tR\x06answer\x12*\n" +
+	"\x11unmatched_task_id\x18\x06 \x01(\tR\x0funmatchedTaskId\"G\n" +
 	"\x15CreateControlResponse\x12.\n" +
 	"\acontrol\x18\x01 \x01(\v2\x14.security.v1.ControlR\acontrol\"-\n" +
 	"\x15SearchControlsRequest\x12\x14\n" +

@@ -13,20 +13,30 @@ export async function GET(request:Request) {
             body: JSON.stringify({ query }),
             cache: 'no-store'
         });
+
         if (!res.ok) {
             throw new Error(`API request failed with status ${res.status}`);
         }
+
         const data = await res.json();
+        
+        // ★ Connect (Go) から返ってくるレスポンスの hits は、空の場合 undefined になることがある
+        // そこで、undefined の場合は [] (空配列) をフォールバックとして使う
         const hits = data.hits || [];
+
         return NextResponse.json({
             query: query,
             total: hits.length,
-            items: hits
+            items: hits // ← これで items が必ず配列（最低でも空配列）になる
         });
     } catch (error) {
         console.error('Error fetching search results:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        // ★ エラー時もフロントエンドが落ちないように、空の items を返す
+        return NextResponse.json({ 
+            query: query,
+            total: 0, 
+            items: [] 
+        }, { status: 500 });
     }
-    
 }
     

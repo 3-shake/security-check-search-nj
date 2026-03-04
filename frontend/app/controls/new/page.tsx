@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState,useEffect, Suspense } from "react";
+import { useRouter ,useSearchParams} from "next/navigation";
 import Link from "next/link";
 import { ca, fi } from "zod/v4/locales";
+import toast from "react-hot-toast";
 
-export default function NewControlPage() {
+function NewControlForm() {
+  const [taskId, setTaskId] = useState<string | null>(null); 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isSaving, setIsSaving] = useState(false);
 
     const [title, setTitle] = useState("");
@@ -14,11 +17,18 @@ export default function NewControlPage() {
     const [tagsInput, setTagsInput] = useState("");
     const [question, setQuestion] = useState("");
     const [answer, setAnswer] = useState("");
+
+    useEffect(() => {
+    const q = searchParams.get("question");
+    const t = searchParams.get("taskId");
+    if (q) setQuestion(decodeURIComponent(q));
+    if (t) setTaskId(t);
+  }, [searchParams]);
     
 
   const handleSave = async () => {
     if (!title || !category || !question || !answer) {
-      alert("タイトル、カテゴリ、質問、回答は必須です。");
+      toast.error("タイトル、カテゴリ、質問、回答は必須です。");
       return;
     }
 
@@ -36,20 +46,21 @@ try {      const res = await fetch("/api/controls", {
           tags: tagsArray,
           question,
           answer,
+          unmatchedTaskId: taskId,
         }),
         });
         if (!res.ok) {
           throw new Error("Failed to save control");
         }
+        toast.success("新しいControlを作成しました！");
         router.push("/controls");
       } catch (error) {
         console.error(error);
-        alert("コントロールの保存中にエラーが発生しました。");
+        toast.error("コントロールの保存中にエラーが発生しました。");
       } finally {
         setIsSaving(false);
       }
-    router.push("/controls");
-    };
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -145,5 +156,12 @@ try {      const res = await fetch("/api/controls", {
         </div>
       </div>
     </div>
+  );
+}
+export default function NewControlPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">読み込み中...</div>}>
+      <NewControlForm />
+    </Suspense>
   );
 }

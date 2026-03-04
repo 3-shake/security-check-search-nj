@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Link from 'next/link';
-
+import { Toaster } from 'react-hot-toast';
 const inter = Inter ({subsets : ["latin"]});
 export const metadata: Metadata = {
     title: 'セキュリティナレッジ統制管理システム',
@@ -15,6 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return (
         <html lang="ja">
       <body className={`${inter.className} bg-gray-50 text-gray-900`}>
+        <Toaster position="top-right" />
         <div className="flex h-screen overflow-hidden">
           {/* サイドバー */}
           <aside className="w-64 bg-slate-900 text-white flex flex-col">
