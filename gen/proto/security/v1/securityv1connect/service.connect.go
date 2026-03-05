@@ -50,6 +50,9 @@ const (
 	// SecurityServiceDeleteControlProcedure is the fully-qualified name of the SecurityService's
 	// DeleteControl RPC.
 	SecurityServiceDeleteControlProcedure = "/security.v1.SecurityService/DeleteControl"
+	// SecurityServiceGetDashboardStatsProcedure is the fully-qualified name of the SecurityService's
+	// GetDashboardStats RPC.
+	SecurityServiceGetDashboardStatsProcedure = "/security.v1.SecurityService/GetDashboardStats"
 	// SecurityServiceSearchControlsProcedure is the fully-qualified name of the SecurityService's
 	// SearchControls RPC.
 	SecurityServiceSearchControlsProcedure = "/security.v1.SecurityService/SearchControls"
@@ -71,6 +74,7 @@ type SecurityServiceClient interface {
 	CreateControl(context.Context, *connect.Request[v1.CreateControlRequest]) (*connect.Response[v1.CreateControlResponse], error)
 	UpdateControl(context.Context, *connect.Request[v1.UpdateControlRequest]) (*connect.Response[v1.UpdateControlResponse], error)
 	DeleteControl(context.Context, *connect.Request[v1.DeleteControlRequest]) (*connect.Response[v1.DeleteControlResponse], error)
+	GetDashboardStats(context.Context, *connect.Request[v1.GetDashboardStatsRequest]) (*connect.Response[v1.GetDashboardStatsResponse], error)
 	// 2. 検索API
 	SearchControls(context.Context, *connect.Request[v1.SearchControlsRequest]) (*connect.Response[v1.SearchControlsResponse], error)
 	// 3. 未マッチタスク（unmatched）API
@@ -126,6 +130,12 @@ func NewSecurityServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(securityServiceMethods.ByName("DeleteControl")),
 			connect.WithClientOptions(opts...),
 		),
+		getDashboardStats: connect.NewClient[v1.GetDashboardStatsRequest, v1.GetDashboardStatsResponse](
+			httpClient,
+			baseURL+SecurityServiceGetDashboardStatsProcedure,
+			connect.WithSchema(securityServiceMethods.ByName("GetDashboardStats")),
+			connect.WithClientOptions(opts...),
+		),
 		searchControls: connect.NewClient[v1.SearchControlsRequest, v1.SearchControlsResponse](
 			httpClient,
 			baseURL+SecurityServiceSearchControlsProcedure,
@@ -155,6 +165,7 @@ type securityServiceClient struct {
 	createControl      *connect.Client[v1.CreateControlRequest, v1.CreateControlResponse]
 	updateControl      *connect.Client[v1.UpdateControlRequest, v1.UpdateControlResponse]
 	deleteControl      *connect.Client[v1.DeleteControlRequest, v1.DeleteControlResponse]
+	getDashboardStats  *connect.Client[v1.GetDashboardStatsRequest, v1.GetDashboardStatsResponse]
 	searchControls     *connect.Client[v1.SearchControlsRequest, v1.SearchControlsResponse]
 	listUnmatchedTasks *connect.Client[v1.ListUnmatchedTasksRequest, v1.ListUnmatchedTasksResponse]
 	listFeedEvents     *connect.Client[v1.ListFeedEventsRequest, v1.ListFeedEventsResponse]
@@ -190,6 +201,11 @@ func (c *securityServiceClient) DeleteControl(ctx context.Context, req *connect.
 	return c.deleteControl.CallUnary(ctx, req)
 }
 
+// GetDashboardStats calls security.v1.SecurityService.GetDashboardStats.
+func (c *securityServiceClient) GetDashboardStats(ctx context.Context, req *connect.Request[v1.GetDashboardStatsRequest]) (*connect.Response[v1.GetDashboardStatsResponse], error) {
+	return c.getDashboardStats.CallUnary(ctx, req)
+}
+
 // SearchControls calls security.v1.SecurityService.SearchControls.
 func (c *securityServiceClient) SearchControls(ctx context.Context, req *connect.Request[v1.SearchControlsRequest]) (*connect.Response[v1.SearchControlsResponse], error) {
 	return c.searchControls.CallUnary(ctx, req)
@@ -215,6 +231,7 @@ type SecurityServiceHandler interface {
 	CreateControl(context.Context, *connect.Request[v1.CreateControlRequest]) (*connect.Response[v1.CreateControlResponse], error)
 	UpdateControl(context.Context, *connect.Request[v1.UpdateControlRequest]) (*connect.Response[v1.UpdateControlResponse], error)
 	DeleteControl(context.Context, *connect.Request[v1.DeleteControlRequest]) (*connect.Response[v1.DeleteControlResponse], error)
+	GetDashboardStats(context.Context, *connect.Request[v1.GetDashboardStatsRequest]) (*connect.Response[v1.GetDashboardStatsResponse], error)
 	// 2. 検索API
 	SearchControls(context.Context, *connect.Request[v1.SearchControlsRequest]) (*connect.Response[v1.SearchControlsResponse], error)
 	// 3. 未マッチタスク（unmatched）API
@@ -266,6 +283,12 @@ func NewSecurityServiceHandler(svc SecurityServiceHandler, opts ...connect.Handl
 		connect.WithSchema(securityServiceMethods.ByName("DeleteControl")),
 		connect.WithHandlerOptions(opts...),
 	)
+	securityServiceGetDashboardStatsHandler := connect.NewUnaryHandler(
+		SecurityServiceGetDashboardStatsProcedure,
+		svc.GetDashboardStats,
+		connect.WithSchema(securityServiceMethods.ByName("GetDashboardStats")),
+		connect.WithHandlerOptions(opts...),
+	)
 	securityServiceSearchControlsHandler := connect.NewUnaryHandler(
 		SecurityServiceSearchControlsProcedure,
 		svc.SearchControls,
@@ -298,6 +321,8 @@ func NewSecurityServiceHandler(svc SecurityServiceHandler, opts ...connect.Handl
 			securityServiceUpdateControlHandler.ServeHTTP(w, r)
 		case SecurityServiceDeleteControlProcedure:
 			securityServiceDeleteControlHandler.ServeHTTP(w, r)
+		case SecurityServiceGetDashboardStatsProcedure:
+			securityServiceGetDashboardStatsHandler.ServeHTTP(w, r)
 		case SecurityServiceSearchControlsProcedure:
 			securityServiceSearchControlsHandler.ServeHTTP(w, r)
 		case SecurityServiceListUnmatchedTasksProcedure:
@@ -335,6 +360,10 @@ func (UnimplementedSecurityServiceHandler) UpdateControl(context.Context, *conne
 
 func (UnimplementedSecurityServiceHandler) DeleteControl(context.Context, *connect.Request[v1.DeleteControlRequest]) (*connect.Response[v1.DeleteControlResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("security.v1.SecurityService.DeleteControl is not implemented"))
+}
+
+func (UnimplementedSecurityServiceHandler) GetDashboardStats(context.Context, *connect.Request[v1.GetDashboardStatsRequest]) (*connect.Response[v1.GetDashboardStatsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("security.v1.SecurityService.GetDashboardStats is not implemented"))
 }
 
 func (UnimplementedSecurityServiceHandler) SearchControls(context.Context, *connect.Request[v1.SearchControlsRequest]) (*connect.Response[v1.SearchControlsResponse], error) {

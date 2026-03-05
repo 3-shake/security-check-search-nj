@@ -19,6 +19,7 @@ service SecurityService {
   rpc CreateControl (CreateControlRequest) returns (CreateControlResponse) {}
   rpc UpdateControl (UpdateControlRequest) returns (UpdateControlResponse) {}
   rpc DeleteControl(DeleteControlRequest) returns (DeleteControlResponse) {}
+  rpc GetDashboardStats(GetDashboardStatsRequest) returns (GetDashboardStatsResponse);
 
   // 2. 検索API
   rpc SearchControls (SearchControlsRequest) returns (SearchControlsResponse) {}
@@ -145,4 +146,14 @@ message DeleteControlRequest {
 
 message DeleteControlResponse {
   bool success = 1;
+}
+// ダッシュボード統計情報取得用リクエスト
+message GetDashboardStatsRequest {}
+
+// ダッシュボード統計情報取得用レスポンス
+message GetDashboardStatsResponse {
+  int32 total_controls = 1;      // 登録済みナレッジ（Control）の総数
+  int32 pending_unmatched = 2;   // 未マッチ質問の残り件数
+  // 必要に応じて「今週の更新数」などを追加することも可能です
+  int32 team_updates = 3;
 }

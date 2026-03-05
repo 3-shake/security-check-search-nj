@@ -11,6 +11,9 @@ import (
 )
 
 type Querier interface {
+	CountControls(ctx context.Context) (int64, error)
+	CountPendingUnmatchedTasks(ctx context.Context) (int64, error)
+	CountRecentTeamUpdates(ctx context.Context) (int64, error)
 	CreateControl(ctx context.Context, arg CreateControlParams) (Control, error)
 	// 変更前のスナップショットを履歴として保存するためのクエリです
 	CreateControlVersion(ctx context.Context, arg CreateControlVersionParams) (ControlVersion, error)
@@ -23,6 +26,7 @@ type Querier interface {
 	DeleteControlTags(ctx context.Context, controlID string) error
 	// backend/db/query/controls.sql
 	GetControl(ctx context.Context, id string) (GetControlRow, error)
+	GetControlsByIDs(ctx context.Context, dollar_1 []string) ([]GetControlsByIDsRow, error)
 	LinkControlTag(ctx context.Context, arg LinkControlTagParams) error
 	ListControls(ctx context.Context) ([]ListControlsRow, error)
 	ListFeedEvents(ctx context.Context) ([]ListFeedEventsRow, error)

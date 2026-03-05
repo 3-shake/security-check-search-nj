@@ -11,6 +11,40 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countControls = `-- name: CountControls :one
+SELECT COUNT(*) FROM controls
+`
+
+func (q *Queries) CountControls(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countControls)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countPendingUnmatchedTasks = `-- name: CountPendingUnmatchedTasks :one
+SELECT COUNT(*) FROM unmatched_tasks WHERE status = 'pending'
+`
+
+func (q *Queries) CountPendingUnmatchedTasks(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countPendingUnmatchedTasks)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countRecentTeamUpdates = `-- name: CountRecentTeamUpdates :one
+SELECT COUNT(*) FROM feed_events 
+WHERE created_at >= NOW() - INTERVAL '7 days'
+`
+
+func (q *Queries) CountRecentTeamUpdates(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countRecentTeamUpdates)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createControl = `-- name: CreateControl :one
 INSERT INTO controls (
   id, title, question, answer, category, status, version
@@ -173,6 +207,57 @@ func (q *Queries) GetControl(ctx context.Context, id string) (GetControlRow, err
 		&i.Tags,
 	)
 	return i, err
+}
+
+const getControlsByIDs = `-- name: GetControlsByIDs :many
+SELECT 
+    c.id, c.title, c.category, c.question, c.answer, c.status, c.version,
+    COALESCE(array_agg(t.name) FILTER (WHERE t.name IS NOT NULL), '{}')::varchar[] AS tags
+FROM controls c
+LEFT JOIN control_tags ct ON c.id = ct.control_id
+LEFT JOIN tags t ON ct.tag_id = t.id
+WHERE c.id = ANY($1::text[])
+GROUP BY c.id
+`
+
+type GetControlsByIDsRow struct {
+	ID       string   `json:"id"`
+	Title    string   `json:"title"`
+	Category string   `json:"category"`
+	Question string   `json:"question"`
+	Answer   string   `json:"answer"`
+	Status   string   `json:"status"`
+	Version  int32    `json:"version"`
+	Tags     []string `json:"tags"`
+}
+
+func (q *Queries) GetControlsByIDs(ctx context.Context, dollar_1 []string) ([]GetControlsByIDsRow, error) {
+	rows, err := q.db.Query(ctx, getControlsByIDs, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetControlsByIDsRow
+	for rows.Next() {
+		var i GetControlsByIDsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Category,
+			&i.Question,
+			&i.Answer,
+			&i.Status,
+			&i.Version,
+			&i.Tags,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const linkControlTag = `-- name: LinkControlTag :exec
