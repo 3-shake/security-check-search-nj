@@ -25,6 +25,7 @@ export default function DashboardPage() {
     );
   }
 
+  // ③ データ取得成功時のUI
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">ダッシュボード</h1>
