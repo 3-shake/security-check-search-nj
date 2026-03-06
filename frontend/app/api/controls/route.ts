@@ -30,8 +30,8 @@ export async function GET() {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
-    const  id = await params.id;
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     try {
         const body = await request.json();
         const response = await fetch(`http://localhost:8080/security.v1.SecurityService/UpdateControl`, {
