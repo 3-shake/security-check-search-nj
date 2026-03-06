@@ -1,95 +1,100 @@
-// frontend/app/unmatched/page.tsx
+"use client";
+
 import Link from "next/link";
+// ★ 先ほど作ったカスタムフックをインポート
+import { useUnmatched } from "../../hooks/useUnmatched";
 
-// APIが返すJSONの型定義
-type UnmatchedTask = {
-  id: string;
-  sourceFile: string;
-  rowNumber: number;
-  originalQuestion: string;
-  suggestedControl: {
-    id: string;
-    title: string;
-    matchScore: number;
-  } | null;
-  status: string;
-};
-
-export default async function UnmatchedPage() {
-  // APIから未マッチタスクのリストを取得
-  const res = await fetch('http://localhost:3000/api/unmatched', {
-    cache: "no-store",
-  });
-  const tasks: UnmatchedTask[] = await res.json();
+export default function UnmatchedPage() {
+  // ★ fetchの代わりにフックを呼び出すだけ！超スッキリ！
+  const { tasks, isLoading, error } = useUnmatched();
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">未マッチ管理 (要対応タスク)</h1>
-        <p className="text-gray-600 text-sm">
-          取り込んだCSVの中で、既存のナレッジと自動で紐付かなかった質問のリストです。手動でマッピングするか、新しいナレッジとして登録してください。
-        </p>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-          <span className="font-bold text-gray-700">残りタスク: {tasks.length} 件</span>
+    <div className="max-w-5xl mx-auto space-y-6">
+      <div className="flex justify-between items-center border-b pb-4">
+        <div>
+          <h1 className="text-2xl font-bold mb-2 text-gray-900">未マッチ（新規質問）管理</h1>
+          <p className="text-gray-600">
+            アップロードされたチェックシートの中で、過去のナレッジと一致しなかった質問の一覧です。
+          </p>
         </div>
-
-        <ul className="divide-y divide-gray-200">
-          {tasks.map((task) => (
-            <li key={task.id} className="p-6 hover:bg-gray-50 transition-colors">
-              <div className="flex flex-col md:flex-row gap-6">
-                
-                {/* 左側：元の質問情報 */}
-                <div className="flex-1 space-y-3">
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <span className="bg-yellow-100 text-yellow-800 font-bold px-2 py-1 rounded">
-                      {task.id}
-                    </span>
-                    <span>ファイル: {task.sourceFile} (行: {task.rowNumber})</span>
-                  </div>
-                  <div className="bg-gray-100 p-3 rounded border border-gray-200 text-gray-800 font-medium">
-                    {task.originalQuestion}
-                  </div>
-                </div>
-
-                {/* 右側：サジェストとアクション */}
-                <div className="flex-1 flex flex-col justify-center space-y-3 border-t md:border-t-0 md:border-l border-gray-200 pt-4 md:pt-0 md:pl-6">
-                  {task.suggestedControl ? (
-                    <div>
-                      <p className="text-xs font-bold text-gray-500 mb-1">AIのサジェスト候補 (類似度: {task.suggestedControl.matchScore}%)</p>
-                      <Link href={`/controls/${task.suggestedControl.id}`} className="block bg-blue-50 border border-blue-100 p-2 rounded text-sm text-blue-700 hover:underline mb-2">
-                        {task.suggestedControl.id} : {task.suggestedControl.title}
-                      </Link>
-                      <div className="flex gap-2">
-                        <button className="flex-1 bg-white border border-blue-600 text-blue-600 text-sm font-bold py-1.5 rounded hover:bg-blue-50">
-                          これに紐付ける
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <p className="text-xs font-bold text-gray-500 mb-1">サジェスト候補</p>
-                      <p className="text-sm text-gray-500 italic mb-3">類似するナレッジが見つかりませんでした。</p>
-                    </div>
-                  )}
-
-                  <div className="flex gap-2 pt-2">
-                    <button className="flex-1 bg-gray-800 text-white text-sm font-bold py-1.5 rounded hover:bg-gray-700">
-                      新規Control作成
-                    </button>
-                    <button className="flex-1 bg-white border border-gray-300 text-gray-700 text-sm font-bold py-1.5 rounded hover:bg-gray-50">
-                      手動検索
-                    </button>
-                  </div>
-                </div>
-
-              </div>
-            </li>
-          ))}
-        </ul>
       </div>
+
+      {/* エラー時の表示を追加 */}
+      {error && (
+        <div className="p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg">
+          <p className="font-bold text-sm">エラーが発生しました: {error.message}</p>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm">
+                <th className="p-4 font-semibold w-1/4">ファイル名 (行番号)</th>
+                <th className="p-4 font-semibold w-1/2">質問内容</th>
+                <th className="p-4 font-semibold w-1/4">アクション</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {[...Array(5)].map((_, i) => (
+                <tr key={i}>
+                  <td className="p-4">
+                    <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-1" />
+                    <div className="h-3 w-12 bg-gray-100 rounded animate-pulse" />
+                  </td>
+                  <td className="p-4">
+                    <div className="h-4 w-full bg-gray-200 rounded animate-pulse mb-1" />
+                    <div className="h-4 w-2/3 bg-gray-200 rounded animate-pulse" />
+                  </td>
+                  <td className="p-4">
+                    <div className="h-8 w-28 bg-gray-200 rounded animate-pulse" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : tasks.length === 0 && !error ? (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-10 text-center text-gray-500">
+          現在、未回答の新しい質問はありません。
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm">
+                <th className="p-4 font-semibold w-1/4">ファイル名 (行番号)</th>
+                <th className="p-4 font-semibold w-1/2">質問内容</th>
+                <th className="p-4 font-semibold w-1/4">アクション</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {tasks.map((task) => (
+                <tr key={task.id} className="hover:bg-blue-50 transition-colors group">
+                  <td className="p-4 text-sm text-gray-700">
+                    <span className="block font-medium truncate" title={task.originalFileName}>
+                      {task.originalFileName}
+                    </span>
+                    <span className="text-xs text-gray-500">行: {task.rowNumber}</span>
+                  </td>
+                  <td className="p-4 text-sm text-gray-900 font-medium">
+                    {task.questionText}
+                  </td>
+                  <td className="p-4">
+                    <Link
+                      href={`/controls/new?question=${encodeURIComponent(task.questionText)}&taskId=${task.id}`}
+                      className="inline-block px-4 py-2 bg-blue-100 text-blue-700 text-sm font-semibold rounded hover:bg-blue-200 transition-colors"
+                    >
+                      回答を作成する
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,2 +1,6 @@
 [tools]
+node = "20"
+go = "1.25.6"
 buf = "latest"
+"gcloud-sdk" = "latest"  # 追加：GCSやPub/Subの操作に必要
+"golang-migrate" = "latest" # 追加：DBマイグレーションの管理用
