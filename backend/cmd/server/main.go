@@ -327,7 +327,7 @@ func main() {
 
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://postgres:postgres@localhost:5432/security?sslmode=disable"
+		dbURL = "postgres://postgres:password@localhost:5433/security_check?sslmode=disable"
 	}
 	pool, err := pgxpool.New(ctx, dbURL)
 	if err != nil {
