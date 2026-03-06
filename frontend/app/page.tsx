@@ -1,48 +1,29 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { createClient } from "@connectrpc/connect";
-import { createConnectTransport } from '@connectrpc/connect-web';
-import { SecurityService } from '../gen/proto/security/v1/service_pb';
-import type { FeedEvent } from '../gen/proto/security/v1/service_pb';
+import { useDashboard } from '../hooks/useDashboard';
 import { timestampDate } from '@bufbuild/protobuf/wkt';
 
-// transport/client をコンポーネント外に配置し、毎レンダー再生成を防止
-const transport = createConnectTransport({
-  baseUrl: 'http://localhost:8080',
-});
-const client = createClient(SecurityService, transport);
-
-type DashboardStats = {
-  totalControls: number;
-  unmatchedTasks: number;
-  teamUpdates: number;
-};
-
 export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats>({
-    totalControls: 0,
-    unmatchedTasks: 0,
-    teamUpdates: 0,
-  });
-  const [activities, setActivities] = useState<FeedEvent[]>([]);
+  const { stats, activities, isLoading, error } = useDashboard();
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await client.getDashboardStats({});
-        setStats({
-          totalControls: res.totalControls,
-          unmatchedTasks: res.pendingUnmatched,
-          teamUpdates: res.teamUpdates,
-        });
-        const feedRes = await client.listFeedEvents({});
-        setActivities(feedRes.events);
-      } catch (error) {
-        console.error('Failed to fetch dashboard stats', error);
-      }
-    };
-    fetchStats();
-  }, []);
+  // ① エラー時のUI
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg">
+        <h2 className="font-bold">データの取得に失敗しました</h2>
+        <p className="text-sm">{error.message}</p>
+      </div>
+    );
+  }
+
+  // ② ローディング時のUI（スピナーを表示）
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+        <p className="text-gray-500">ダッシュボードを読み込んでいます...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
