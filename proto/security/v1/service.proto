@@ -87,9 +87,15 @@ message FeedEvent {
 message PingRequest { string message = 1; }
 message PingResponse { string message = 1; }
 
-message ListControlsRequest {}
+message ListControlsRequest {
+  int32 limit = 1;          // 取得件数（0の場合はデフォルト50）
+  int32 offset = 2;         // オフセット（ページネーション用）
+  string sort_field = 3;    // ソート対象フィールド（"updated_at", "title", "category"）
+  string sort_order = 4;    // ソート順（"asc" or "desc"、デフォルト "desc"）
+}
 message ListControlsResponse {
   repeated Control controls = 1;
+  int32 total_count = 2;    // フィルター前の総件数（ページネーション用）
 }
 
 message GetControlRequest {

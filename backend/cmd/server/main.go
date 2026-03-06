@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 
 	"github.com/asuka-sakamoto/security-system/backend/db"
@@ -573,30 +574,79 @@ func (s *SecurityServer) ListControls(
 	req *connect.Request[securityv1.ListControlsRequest],
 ) (*connect.Response[securityv1.ListControlsResponse], error) {
 
-	// sqlcの一覧取得クエリを呼び出し
-	rows, err := s.queries.ListControls(ctx)
+	// 総件数を取得（ページネーション用）
+	totalCount, err := s.queries.CountControls(ctx)
 	if err != nil {
-		// ↓↓↓ ここが超重要！ターミナルに本当のエラー原因を出力します ↓↓↓
-		log.Printf("[緊急エラー確認] DB取得失敗: %v\n", err)
+		log.Printf("Failed to count controls: %v\n", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to count controls: %w", err))
+	}
+
+	// ページネーションのデフォルト値
+	limit := req.Msg.Limit
+	if limit <= 0 {
+		limit = 50
+	}
+	offset := req.Msg.Offset
+	if offset < 0 {
+		offset = 0
+	}
+
+	// ページネーション付きクエリ実行
+	rows, err := s.queries.ListControlsPaginated(ctx, db.ListControlsPaginatedParams{
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		log.Printf("DB取得失敗: %v\n", err)
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to fetch controls: %w", err))
 	}
 
 	controls := make([]*securityv1.Control, 0, len(rows))
 	for _, row := range rows {
 		controls = append(controls, &securityv1.Control{
-			Id:       row.ID,
-			Title:    row.Title,
-			Category: row.Category,
-			Status:   row.Status,
-			Version:  fmt.Sprintf("%d", row.Version),
-			Tags:     row.Tags,
-			Question: row.Question,
-			Answer:   row.Answer,
+			Id:        row.ID,
+			Title:     row.Title,
+			Category:  row.Category,
+			Status:    row.Status,
+			Version:   fmt.Sprintf("%d", row.Version),
+			Tags:      row.Tags,
+			Question:  row.Question,
+			Answer:    row.Answer,
+			UpdatedAt: timestamppb.New(row.UpdatedAt.Time),
+		})
+	}
+
+	// ソート処理（Go側で実施、SQLのデフォルトはupdated_at DESC）
+	sortField := req.Msg.SortField
+	sortOrder := req.Msg.SortOrder
+	if sortOrder == "" {
+		sortOrder = "desc"
+	}
+	if sortField != "" {
+		sort.Slice(controls, func(i, j int) bool {
+			var less bool
+			switch sortField {
+			case "title":
+				less = controls[i].Title < controls[j].Title
+			case "category":
+				less = controls[i].Category < controls[j].Category
+			case "updated_at":
+				ti := controls[i].UpdatedAt.AsTime()
+				tj := controls[j].UpdatedAt.AsTime()
+				less = ti.Before(tj)
+			default:
+				return false
+			}
+			if sortOrder == "desc" {
+				return !less
+			}
+			return less
 		})
 	}
 
 	return connect.NewResponse(&securityv1.ListControlsResponse{
-		Controls: controls,
+		Controls:   controls,
+		TotalCount: int32(totalCount),
 	}), nil
 }
 func startPubSubListener(projectID string, subID string, dbPool *pgxpool.Pool, index bleve.Index) {

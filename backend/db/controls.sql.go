@@ -277,15 +277,15 @@ func (q *Queries) LinkControlTag(ctx context.Context, arg LinkControlTagParams) 
 }
 
 const listControls = `-- name: ListControls :many
-SELECT 
-    c.id, 
-    c.title, 
-    c.category, 
-    c.question, 
-    c.answer, 
-    c.status, 
-    c.version, 
-    c.created_at, 
+SELECT
+    c.id,
+    c.title,
+    c.category,
+    c.question,
+    c.answer,
+    c.status,
+    c.version,
+    c.created_at,
     c.updated_at,
     COALESCE(array_agg(t.name) FILTER (WHERE t.name IS NOT NULL), '{}')::varchar[] AS tags
 FROM controls c
@@ -317,6 +317,75 @@ func (q *Queries) ListControls(ctx context.Context) ([]ListControlsRow, error) {
 	var items []ListControlsRow
 	for rows.Next() {
 		var i ListControlsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Category,
+			&i.Question,
+			&i.Answer,
+			&i.Status,
+			&i.Version,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Tags,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listControlsPaginated = `-- name: ListControlsPaginated :many
+SELECT
+    c.id,
+    c.title,
+    c.category,
+    c.question,
+    c.answer,
+    c.status,
+    c.version,
+    c.created_at,
+    c.updated_at,
+    COALESCE(array_agg(t.name) FILTER (WHERE t.name IS NOT NULL), '{}')::varchar[] AS tags
+FROM controls c
+LEFT JOIN control_tags ct ON c.id = ct.control_id
+LEFT JOIN tags t ON ct.tag_id = t.id
+GROUP BY c.id
+ORDER BY c.updated_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListControlsPaginatedParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type ListControlsPaginatedRow struct {
+	ID        string             `json:"id"`
+	Title     string             `json:"title"`
+	Category  string             `json:"category"`
+	Question  string             `json:"question"`
+	Answer    string             `json:"answer"`
+	Status    string             `json:"status"`
+	Version   int32              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	Tags      []string           `json:"tags"`
+}
+
+func (q *Queries) ListControlsPaginated(ctx context.Context, arg ListControlsPaginatedParams) ([]ListControlsPaginatedRow, error) {
+	rows, err := q.db.Query(ctx, listControlsPaginated, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListControlsPaginatedRow
+	for rows.Next() {
+		var i ListControlsPaginatedRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Title,

@@ -485,6 +485,10 @@ func (x *PingResponse) GetMessage() string {
 
 type ListControlsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`                         // 取得件数（0の場合はデフォルト50）
+	Offset        int32                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`                       // オフセット（ページネーション用）
+	SortField     string                 `protobuf:"bytes,3,opt,name=sort_field,json=sortField,proto3" json:"sort_field,omitempty"` // ソート対象フィールド（"updated_at", "title", "category"）
+	SortOrder     string                 `protobuf:"bytes,4,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty"` // ソート順（"asc" or "desc"、デフォルト "desc"）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -519,9 +523,38 @@ func (*ListControlsRequest) Descriptor() ([]byte, []int) {
 	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{6}
 }
 
+func (x *ListControlsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *ListControlsRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+func (x *ListControlsRequest) GetSortField() string {
+	if x != nil {
+		return x.SortField
+	}
+	return ""
+}
+
+func (x *ListControlsRequest) GetSortOrder() string {
+	if x != nil {
+		return x.SortOrder
+	}
+	return ""
+}
+
 type ListControlsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Controls      []*Control             `protobuf:"bytes,1,rep,name=controls,proto3" json:"controls,omitempty"`
+	TotalCount    int32                  `protobuf:"varint,2,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"` // フィルター前の総件数（ページネーション用）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -561,6 +594,13 @@ func (x *ListControlsResponse) GetControls() []*Control {
 		return x.Controls
 	}
 	return nil
+}
+
+func (x *ListControlsResponse) GetTotalCount() int32 {
+	if x != nil {
+		return x.TotalCount
+	}
+	return 0
 }
 
 type GetControlRequest struct {
@@ -1409,10 +1449,18 @@ const file_proto_security_v1_service_proto_rawDesc = "" +
 	"\vPingRequest\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\"(\n" +
 	"\fPingResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"\x15\n" +
-	"\x13ListControlsRequest\"H\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"\x81\x01\n" +
+	"\x13ListControlsRequest\x12\x14\n" +
+	"\x05limit\x18\x01 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x02 \x01(\x05R\x06offset\x12\x1d\n" +
+	"\n" +
+	"sort_field\x18\x03 \x01(\tR\tsortField\x12\x1d\n" +
+	"\n" +
+	"sort_order\x18\x04 \x01(\tR\tsortOrder\"i\n" +
 	"\x14ListControlsResponse\x120\n" +
-	"\bcontrols\x18\x01 \x03(\v2\x14.security.v1.ControlR\bcontrols\"#\n" +
+	"\bcontrols\x18\x01 \x03(\v2\x14.security.v1.ControlR\bcontrols\x12\x1f\n" +
+	"\vtotal_count\x18\x02 \x01(\x05R\n" +
+	"totalCount\"#\n" +
 	"\x11GetControlRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"{\n" +
 	"\x12GetControlResponse\x12.\n" +

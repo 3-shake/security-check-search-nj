@@ -19,15 +19,15 @@ WHERE c.id = $1
 GROUP BY c.id;
 
 -- name: ListControls :many
-SELECT 
-    c.id, 
-    c.title, 
-    c.category, 
-    c.question, 
-    c.answer, 
-    c.status, 
-    c.version, 
-    c.created_at, 
+SELECT
+    c.id,
+    c.title,
+    c.category,
+    c.question,
+    c.answer,
+    c.status,
+    c.version,
+    c.created_at,
     c.updated_at,
     COALESCE(array_agg(t.name) FILTER (WHERE t.name IS NOT NULL), '{}')::varchar[] AS tags
 FROM controls c
@@ -35,6 +35,25 @@ LEFT JOIN control_tags ct ON c.id = ct.control_id
 LEFT JOIN tags t ON ct.tag_id = t.id
 GROUP BY c.id
 ORDER BY c.updated_at DESC;
+
+-- name: ListControlsPaginated :many
+SELECT
+    c.id,
+    c.title,
+    c.category,
+    c.question,
+    c.answer,
+    c.status,
+    c.version,
+    c.created_at,
+    c.updated_at,
+    COALESCE(array_agg(t.name) FILTER (WHERE t.name IS NOT NULL), '{}')::varchar[] AS tags
+FROM controls c
+LEFT JOIN control_tags ct ON c.id = ct.control_id
+LEFT JOIN tags t ON ct.tag_id = t.id
+GROUP BY c.id
+ORDER BY c.updated_at DESC
+LIMIT $1 OFFSET $2;
 
 -- name: CreateControl :one
 INSERT INTO controls (

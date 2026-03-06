@@ -69,9 +69,33 @@ export default function SearchPage() {
         )}
       </div>
 
+      {/* 検索中スケルトン */}
+      {debouncedQuery && isSearching && (
+        <div className="mt-8 space-y-4">
+          <div className="h-5 w-48 bg-gray-200 rounded animate-pulse mb-4" />
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="h-5 w-16 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-5 w-48 bg-gray-200 rounded animate-pulse" />
+                </div>
+                <div className="h-4 w-20 bg-gray-100 rounded animate-pulse" />
+              </div>
+              <div className="h-4 w-full bg-gray-200 rounded animate-pulse mb-2" />
+              <div className="h-4 w-2/3 bg-gray-200 rounded animate-pulse mb-3" />
+              <div className="flex gap-2">
+                <div className="h-5 w-16 bg-gray-200 rounded animate-pulse" />
+                <div className="h-5 w-14 bg-gray-200 rounded animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* 検索結果エリア */}
-      {debouncedQuery && (
-        <div className="mt-8 transition-opacity duration-300" style={{ opacity: isSearching ? 0.5 : 1 }}>
+      {debouncedQuery && !isSearching && (
+        <div className="mt-8">
           <p className="text-gray-600 mb-4 font-medium">
             「{debouncedQuery}」の検索結果: {data.total} 件
           </p>
@@ -108,12 +132,10 @@ export default function SearchPage() {
               ))}
             </div>
           ) : (
-            !isSearching && (
-              <div className="bg-gray-50 border border-gray-200 p-8 rounded-lg text-center">
-                <p className="text-gray-500">一致するナレッジが見つかりませんでした。</p>
-                <p className="text-sm text-gray-400 mt-2">別のキーワード（例: 認証）でお試しください。</p>
-              </div>
-            )
+            <div className="bg-gray-50 border border-gray-200 p-8 rounded-lg text-center">
+              <p className="text-gray-500">一致するナレッジが見つかりませんでした。</p>
+              <p className="text-sm text-gray-400 mt-2">別のキーワード（例: 認証）でお試しください。</p>
+            </div>
           )}
         </div>
       )}
