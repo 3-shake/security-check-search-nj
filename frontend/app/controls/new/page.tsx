@@ -1,66 +1,11 @@
-"use client";
+'use client';
 
-import { useState,useEffect, Suspense } from "react";
-import { useRouter ,useSearchParams} from "next/navigation";
-import Link from "next/link";
-import { ca, fi } from "zod/v4/locales";
-import toast from "react-hot-toast";
+import { Suspense } from 'react';
+import Link from 'next/link';
+import { useCreateControl } from '../../../hooks/useCreateControl';
 
 function NewControlForm() {
-  const [taskId, setTaskId] = useState<string | null>(null); 
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [isSaving, setIsSaving] = useState(false);
-
-    const [title, setTitle] = useState("");
-    const [category, setCategory] = useState("");
-    const [tagsInput, setTagsInput] = useState("");
-    const [question, setQuestion] = useState("");
-    const [answer, setAnswer] = useState("");
-
-    useEffect(() => {
-    const q = searchParams.get("question");
-    const t = searchParams.get("taskId");
-    if (q) setQuestion(decodeURIComponent(q));
-    if (t) setTaskId(t);
-  }, [searchParams]);
-    
-
-  const handleSave = async () => {
-    if (!title || !category || !question || !answer) {
-      toast.error("タイトル、カテゴリ、質問、回答は必須です。");
-      return;
-    }
-
-    setIsSaving(true);
-    const tagsArray = tagsInput
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag !== "");
-try {      const res = await fetch("/api/controls", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          category,
-          tags: tagsArray,
-          question,
-          answer,
-          unmatchedTaskId: taskId,
-        }),
-        });
-        if (!res.ok) {
-          throw new Error("Failed to save control");
-        }
-        toast.success("新しいControlを作成しました！");
-        router.push("/controls");
-      } catch (error) {
-        console.error(error);
-        toast.error("コントロールの保存中にエラーが発生しました。");
-      } finally {
-        setIsSaving(false);
-      }
-  };
+  const { form, updateField, isSaving, handleSave } = useCreateControl();
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -81,10 +26,10 @@ try {      const res = await fetch("/api/controls", {
             onClick={handleSave}
             disabled={isSaving}
             className={`px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors font-medium ${
-              isSaving ? "opacity-50 cursor-not-allowed" : ""
+              isSaving ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            {isSaving ? "保存中..." : "保存する"}
+            {isSaving ? '保存中...' : '保存する'}
           </button>
         </div>
       </div>
@@ -99,8 +44,8 @@ try {      const res = await fetch("/api/controls", {
             type="text"
             className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             placeholder="例: AWS IAMユーザーのMFA強制"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            value={form.title}
+            onChange={(e) => updateField('title', e.target.value)}
           />
         </div>
 
@@ -113,8 +58,8 @@ try {      const res = await fetch("/api/controls", {
               type="text"
               className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               placeholder="例: Access Control"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={form.category}
+              onChange={(e) => updateField('category', e.target.value)}
             />
           </div>
           <div>
@@ -125,8 +70,8 @@ try {      const res = await fetch("/api/controls", {
               type="text"
               className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               placeholder="例: AWS, IAM, MFA"
-              value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
+              value={form.tagsInput}
+              onChange={(e) => updateField('tagsInput', e.target.value)}
             />
           </div>
         </div>
@@ -138,8 +83,8 @@ try {      const res = await fetch("/api/controls", {
           <textarea
             className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none h-24"
             placeholder="チェックシートでよく聞かれる質問を入力してください"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
+            value={form.question}
+            onChange={(e) => updateField('question', e.target.value)}
           />
         </div>
 
@@ -150,14 +95,15 @@ try {      const res = await fetch("/api/controls", {
           <textarea
             className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none h-40"
             placeholder="質問に対する正式な回答を入力してください"
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
+            value={form.answer}
+            onChange={(e) => updateField('answer', e.target.value)}
           />
         </div>
       </div>
     </div>
   );
 }
+
 export default function NewControlPage() {
   return (
     <Suspense fallback={<div className="p-8 text-center">読み込み中...</div>}>
