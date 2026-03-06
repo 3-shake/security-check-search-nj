@@ -17,6 +17,9 @@ service SecurityService {
   rpc ListControls (ListControlsRequest) returns (ListControlsResponse) {}
   rpc GetControl (GetControlRequest) returns (GetControlResponse) {}
   rpc CreateControl (CreateControlRequest) returns (CreateControlResponse) {}
+  rpc UpdateControl (UpdateControlRequest) returns (UpdateControlResponse) {}
+  rpc DeleteControl(DeleteControlRequest) returns (DeleteControlResponse) {}
+  rpc GetDashboardStats(GetDashboardStatsRequest) returns (GetDashboardStatsResponse);
 
   // 2. 検索API
   rpc SearchControls (SearchControlsRequest) returns (SearchControlsResponse) {}
@@ -40,7 +43,7 @@ message Control {
   string answer = 4;
   string category = 5;
   repeated string tags = 6;
-  int32 version = 7;
+  string version = 7;
   string updated_by = 8;
   google.protobuf.Timestamp updated_at = 9;
   string status = 10;
@@ -74,6 +77,7 @@ message FeedEvent {
   string user_name = 4;
   string description = 5;
   google.protobuf.Timestamp created_at = 6;
+  string control_title = 7;
 }
 
 // ---------------------------------------------------------
@@ -98,11 +102,11 @@ message GetControlResponse {
 
 message CreateControlRequest {
   string title = 1;
-  string question = 2;
-  string answer = 3;
-  string category = 4;
-  repeated string tags = 5;
-  string updated_by = 6;
+  string category = 2;
+  repeated string tags = 3;
+  string question = 4;
+  string answer = 5;
+  string unmatched_task_id = 6; // ★ これを追加
 }
 message CreateControlResponse {
   Control control = 1;
@@ -112,9 +116,21 @@ message SearchControlsRequest {
   string query = 1;
 }
 message SearchControlsResponse {
-  repeated Control controls = 1;
+  repeated Control hits = 1;
+}
+message UpdateControlRequest {
+  string id = 1;
+  string title = 2;
+  string question = 3;
+  string answer = 4;
+  string category = 5;
+  repeated string tags = 6;
+  string updated_by = 7;
 }
 
+message UpdateControlResponse {
+  Control control = 1;
+}
 message ListUnmatchedTasksRequest {}
 message ListUnmatchedTasksResponse {
   repeated UnmatchedTask tasks = 1;
@@ -123,4 +139,21 @@ message ListUnmatchedTasksResponse {
 message ListFeedEventsRequest {}
 message ListFeedEventsResponse {
   repeated FeedEvent events = 1;
+}
+message DeleteControlRequest {
+  string id = 1;
+}
+
+message DeleteControlResponse {
+  bool success = 1;
+}
+// ダッシュボード統計情報取得用リクエスト
+message GetDashboardStatsRequest {}
+
+// ダッシュボード統計情報取得用レスポンス
+message GetDashboardStatsResponse {
+  int32 total_controls = 1;      // 登録済みナレッジ（Control）の総数
+  int32 pending_unmatched = 2;   // 未マッチ質問の残り件数
+  // 必要に応じて「今週の更新数」などを追加することも可能です
+  int32 team_updates = 3;
 }

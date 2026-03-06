@@ -1,8 +1,13 @@
 version: v1
 plugins:
+  # Go 用
   - plugin: buf.build/protocolbuffers/go
     out: gen
     opt: paths=source_relative
   - plugin: buf.build/connectrpc/go
     out: gen
     opt: paths=source_relative
+  # TypeScript 用
+  - plugin: buf.build/bufbuild/es
+    out: frontend/gen
+    opt: target=ts

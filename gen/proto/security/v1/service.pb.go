@@ -31,7 +31,7 @@ type Control struct {
 	Answer        string                 `protobuf:"bytes,4,opt,name=answer,proto3" json:"answer,omitempty"`
 	Category      string                 `protobuf:"bytes,5,opt,name=category,proto3" json:"category,omitempty"`
 	Tags          []string               `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
-	Version       int32                  `protobuf:"varint,7,opt,name=version,proto3" json:"version,omitempty"`
+	Version       string                 `protobuf:"bytes,7,opt,name=version,proto3" json:"version,omitempty"`
 	UpdatedBy     string                 `protobuf:"bytes,8,opt,name=updated_by,json=updatedBy,proto3" json:"updated_by,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	Status        string                 `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
@@ -111,11 +111,11 @@ func (x *Control) GetTags() []string {
 	return nil
 }
 
-func (x *Control) GetVersion() int32 {
+func (x *Control) GetVersion() string {
 	if x != nil {
 		return x.Version
 	}
-	return 0
+	return ""
 }
 
 func (x *Control) GetUpdatedBy() string {
@@ -311,6 +311,7 @@ type FeedEvent struct {
 	UserName      string                 `protobuf:"bytes,4,opt,name=user_name,json=userName,proto3" json:"user_name,omitempty"`
 	Description   string                 `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	ControlTitle  string                 `protobuf:"bytes,7,opt,name=control_title,json=controlTitle,proto3" json:"control_title,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -385,6 +386,13 @@ func (x *FeedEvent) GetCreatedAt() *timestamppb.Timestamp {
 		return x.CreatedAt
 	}
 	return nil
+}
+
+func (x *FeedEvent) GetControlTitle() string {
+	if x != nil {
+		return x.ControlTitle
+	}
+	return ""
 }
 
 type PingRequest struct {
@@ -652,15 +660,15 @@ func (x *GetControlResponse) GetHistory() []*ControlVersion {
 }
 
 type CreateControlRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	Question      string                 `protobuf:"bytes,2,opt,name=question,proto3" json:"question,omitempty"`
-	Answer        string                 `protobuf:"bytes,3,opt,name=answer,proto3" json:"answer,omitempty"`
-	Category      string                 `protobuf:"bytes,4,opt,name=category,proto3" json:"category,omitempty"`
-	Tags          []string               `protobuf:"bytes,5,rep,name=tags,proto3" json:"tags,omitempty"`
-	UpdatedBy     string                 `protobuf:"bytes,6,opt,name=updated_by,json=updatedBy,proto3" json:"updated_by,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Title           string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Category        string                 `protobuf:"bytes,2,opt,name=category,proto3" json:"category,omitempty"`
+	Tags            []string               `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty"`
+	Question        string                 `protobuf:"bytes,4,opt,name=question,proto3" json:"question,omitempty"`
+	Answer          string                 `protobuf:"bytes,5,opt,name=answer,proto3" json:"answer,omitempty"`
+	UnmatchedTaskId string                 `protobuf:"bytes,6,opt,name=unmatched_task_id,json=unmatchedTaskId,proto3" json:"unmatched_task_id,omitempty"` // ★ これを追加
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *CreateControlRequest) Reset() {
@@ -700,20 +708,6 @@ func (x *CreateControlRequest) GetTitle() string {
 	return ""
 }
 
-func (x *CreateControlRequest) GetQuestion() string {
-	if x != nil {
-		return x.Question
-	}
-	return ""
-}
-
-func (x *CreateControlRequest) GetAnswer() string {
-	if x != nil {
-		return x.Answer
-	}
-	return ""
-}
-
 func (x *CreateControlRequest) GetCategory() string {
 	if x != nil {
 		return x.Category
@@ -728,9 +722,23 @@ func (x *CreateControlRequest) GetTags() []string {
 	return nil
 }
 
-func (x *CreateControlRequest) GetUpdatedBy() string {
+func (x *CreateControlRequest) GetQuestion() string {
 	if x != nil {
-		return x.UpdatedBy
+		return x.Question
+	}
+	return ""
+}
+
+func (x *CreateControlRequest) GetAnswer() string {
+	if x != nil {
+		return x.Answer
+	}
+	return ""
+}
+
+func (x *CreateControlRequest) GetUnmatchedTaskId() string {
+	if x != nil {
+		return x.UnmatchedTaskId
 	}
 	return ""
 }
@@ -825,7 +833,7 @@ func (x *SearchControlsRequest) GetQuery() string {
 
 type SearchControlsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Controls      []*Control             `protobuf:"bytes,1,rep,name=controls,proto3" json:"controls,omitempty"`
+	Hits          []*Control             `protobuf:"bytes,1,rep,name=hits,proto3" json:"hits,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -860,9 +868,145 @@ func (*SearchControlsResponse) Descriptor() ([]byte, []int) {
 	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *SearchControlsResponse) GetControls() []*Control {
+func (x *SearchControlsResponse) GetHits() []*Control {
 	if x != nil {
-		return x.Controls
+		return x.Hits
+	}
+	return nil
+}
+
+type UpdateControlRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Question      string                 `protobuf:"bytes,3,opt,name=question,proto3" json:"question,omitempty"`
+	Answer        string                 `protobuf:"bytes,4,opt,name=answer,proto3" json:"answer,omitempty"`
+	Category      string                 `protobuf:"bytes,5,opt,name=category,proto3" json:"category,omitempty"`
+	Tags          []string               `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
+	UpdatedBy     string                 `protobuf:"bytes,7,opt,name=updated_by,json=updatedBy,proto3" json:"updated_by,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateControlRequest) Reset() {
+	*x = UpdateControlRequest{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateControlRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateControlRequest) ProtoMessage() {}
+
+func (x *UpdateControlRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateControlRequest.ProtoReflect.Descriptor instead.
+func (*UpdateControlRequest) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *UpdateControlRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *UpdateControlRequest) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *UpdateControlRequest) GetQuestion() string {
+	if x != nil {
+		return x.Question
+	}
+	return ""
+}
+
+func (x *UpdateControlRequest) GetAnswer() string {
+	if x != nil {
+		return x.Answer
+	}
+	return ""
+}
+
+func (x *UpdateControlRequest) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *UpdateControlRequest) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+func (x *UpdateControlRequest) GetUpdatedBy() string {
+	if x != nil {
+		return x.UpdatedBy
+	}
+	return ""
+}
+
+type UpdateControlResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Control       *Control               `protobuf:"bytes,1,opt,name=control,proto3" json:"control,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateControlResponse) Reset() {
+	*x = UpdateControlResponse{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateControlResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateControlResponse) ProtoMessage() {}
+
+func (x *UpdateControlResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateControlResponse.ProtoReflect.Descriptor instead.
+func (*UpdateControlResponse) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *UpdateControlResponse) GetControl() *Control {
+	if x != nil {
+		return x.Control
 	}
 	return nil
 }
@@ -875,7 +1019,7 @@ type ListUnmatchedTasksRequest struct {
 
 func (x *ListUnmatchedTasksRequest) Reset() {
 	*x = ListUnmatchedTasksRequest{}
-	mi := &file_proto_security_v1_service_proto_msgTypes[14]
+	mi := &file_proto_security_v1_service_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -887,7 +1031,7 @@ func (x *ListUnmatchedTasksRequest) String() string {
 func (*ListUnmatchedTasksRequest) ProtoMessage() {}
 
 func (x *ListUnmatchedTasksRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_security_v1_service_proto_msgTypes[14]
+	mi := &file_proto_security_v1_service_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -900,7 +1044,7 @@ func (x *ListUnmatchedTasksRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUnmatchedTasksRequest.ProtoReflect.Descriptor instead.
 func (*ListUnmatchedTasksRequest) Descriptor() ([]byte, []int) {
-	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{14}
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{16}
 }
 
 type ListUnmatchedTasksResponse struct {
@@ -912,7 +1056,7 @@ type ListUnmatchedTasksResponse struct {
 
 func (x *ListUnmatchedTasksResponse) Reset() {
 	*x = ListUnmatchedTasksResponse{}
-	mi := &file_proto_security_v1_service_proto_msgTypes[15]
+	mi := &file_proto_security_v1_service_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -924,7 +1068,7 @@ func (x *ListUnmatchedTasksResponse) String() string {
 func (*ListUnmatchedTasksResponse) ProtoMessage() {}
 
 func (x *ListUnmatchedTasksResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_security_v1_service_proto_msgTypes[15]
+	mi := &file_proto_security_v1_service_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -937,7 +1081,7 @@ func (x *ListUnmatchedTasksResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUnmatchedTasksResponse.ProtoReflect.Descriptor instead.
 func (*ListUnmatchedTasksResponse) Descriptor() ([]byte, []int) {
-	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{15}
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ListUnmatchedTasksResponse) GetTasks() []*UnmatchedTask {
@@ -955,7 +1099,7 @@ type ListFeedEventsRequest struct {
 
 func (x *ListFeedEventsRequest) Reset() {
 	*x = ListFeedEventsRequest{}
-	mi := &file_proto_security_v1_service_proto_msgTypes[16]
+	mi := &file_proto_security_v1_service_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -967,7 +1111,7 @@ func (x *ListFeedEventsRequest) String() string {
 func (*ListFeedEventsRequest) ProtoMessage() {}
 
 func (x *ListFeedEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_security_v1_service_proto_msgTypes[16]
+	mi := &file_proto_security_v1_service_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -980,7 +1124,7 @@ func (x *ListFeedEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFeedEventsRequest.ProtoReflect.Descriptor instead.
 func (*ListFeedEventsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{16}
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{18}
 }
 
 type ListFeedEventsResponse struct {
@@ -992,7 +1136,7 @@ type ListFeedEventsResponse struct {
 
 func (x *ListFeedEventsResponse) Reset() {
 	*x = ListFeedEventsResponse{}
-	mi := &file_proto_security_v1_service_proto_msgTypes[17]
+	mi := &file_proto_security_v1_service_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1004,7 +1148,7 @@ func (x *ListFeedEventsResponse) String() string {
 func (*ListFeedEventsResponse) ProtoMessage() {}
 
 func (x *ListFeedEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_security_v1_service_proto_msgTypes[17]
+	mi := &file_proto_security_v1_service_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1017,7 +1161,7 @@ func (x *ListFeedEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFeedEventsResponse.ProtoReflect.Descriptor instead.
 func (*ListFeedEventsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{17}
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ListFeedEventsResponse) GetEvents() []*FeedEvent {
@@ -1025,6 +1169,193 @@ func (x *ListFeedEventsResponse) GetEvents() []*FeedEvent {
 		return x.Events
 	}
 	return nil
+}
+
+type DeleteControlRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteControlRequest) Reset() {
+	*x = DeleteControlRequest{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteControlRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteControlRequest) ProtoMessage() {}
+
+func (x *DeleteControlRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteControlRequest.ProtoReflect.Descriptor instead.
+func (*DeleteControlRequest) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *DeleteControlRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type DeleteControlResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteControlResponse) Reset() {
+	*x = DeleteControlResponse{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteControlResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteControlResponse) ProtoMessage() {}
+
+func (x *DeleteControlResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteControlResponse.ProtoReflect.Descriptor instead.
+func (*DeleteControlResponse) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *DeleteControlResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+// ダッシュボード統計情報取得用リクエスト
+type GetDashboardStatsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDashboardStatsRequest) Reset() {
+	*x = GetDashboardStatsRequest{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDashboardStatsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDashboardStatsRequest) ProtoMessage() {}
+
+func (x *GetDashboardStatsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDashboardStatsRequest.ProtoReflect.Descriptor instead.
+func (*GetDashboardStatsRequest) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{22}
+}
+
+// ダッシュボード統計情報取得用レスポンス
+type GetDashboardStatsResponse struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	TotalControls    int32                  `protobuf:"varint,1,opt,name=total_controls,json=totalControls,proto3" json:"total_controls,omitempty"`          // 登録済みナレッジ（Control）の総数
+	PendingUnmatched int32                  `protobuf:"varint,2,opt,name=pending_unmatched,json=pendingUnmatched,proto3" json:"pending_unmatched,omitempty"` // 未マッチ質問の残り件数
+	// 必要に応じて「今週の更新数」などを追加することも可能です
+	TeamUpdates   int32 `protobuf:"varint,3,opt,name=team_updates,json=teamUpdates,proto3" json:"team_updates,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDashboardStatsResponse) Reset() {
+	*x = GetDashboardStatsResponse{}
+	mi := &file_proto_security_v1_service_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDashboardStatsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDashboardStatsResponse) ProtoMessage() {}
+
+func (x *GetDashboardStatsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_security_v1_service_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDashboardStatsResponse.ProtoReflect.Descriptor instead.
+func (*GetDashboardStatsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_security_v1_service_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *GetDashboardStatsResponse) GetTotalControls() int32 {
+	if x != nil {
+		return x.TotalControls
+	}
+	return 0
+}
+
+func (x *GetDashboardStatsResponse) GetPendingUnmatched() int32 {
+	if x != nil {
+		return x.PendingUnmatched
+	}
+	return 0
+}
+
+func (x *GetDashboardStatsResponse) GetTeamUpdates() int32 {
+	if x != nil {
+		return x.TeamUpdates
+	}
+	return 0
 }
 
 var File_proto_security_v1_service_proto protoreflect.FileDescriptor
@@ -1039,7 +1370,7 @@ const file_proto_security_v1_service_proto_rawDesc = "" +
 	"\x06answer\x18\x04 \x01(\tR\x06answer\x12\x1a\n" +
 	"\bcategory\x18\x05 \x01(\tR\bcategory\x12\x12\n" +
 	"\x04tags\x18\x06 \x03(\tR\x04tags\x12\x18\n" +
-	"\aversion\x18\a \x01(\x05R\aversion\x12\x1d\n" +
+	"\aversion\x18\a \x01(\tR\aversion\x12\x1d\n" +
 	"\n" +
 	"updated_by\x18\b \x01(\tR\tupdatedBy\x129\n" +
 	"\n" +
@@ -1063,7 +1394,7 @@ const file_proto_security_v1_service_proto_rawDesc = "" +
 	"\rquestion_text\x18\x04 \x01(\tR\fquestionText\x12\x16\n" +
 	"\x06status\x18\x05 \x01(\tR\x06status\x129\n" +
 	"\n" +
-	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xd3\x01\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xf8\x01\n" +
 	"\tFeedEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x1d\n" +
 	"\n" +
@@ -1073,7 +1404,8 @@ const file_proto_security_v1_service_proto_rawDesc = "" +
 	"\tuser_name\x18\x04 \x01(\tR\buserName\x12 \n" +
 	"\vdescription\x18\x05 \x01(\tR\vdescription\x129\n" +
 	"\n" +
-	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"'\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12#\n" +
+	"\rcontrol_title\x18\a \x01(\tR\fcontrolTitle\"'\n" +
 	"\vPingRequest\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\"(\n" +
 	"\fPingResponse\x12\x18\n" +
@@ -1085,33 +1417,55 @@ const file_proto_security_v1_service_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"{\n" +
 	"\x12GetControlResponse\x12.\n" +
 	"\acontrol\x18\x01 \x01(\v2\x14.security.v1.ControlR\acontrol\x125\n" +
-	"\ahistory\x18\x02 \x03(\v2\x1b.security.v1.ControlVersionR\ahistory\"\xaf\x01\n" +
+	"\ahistory\x18\x02 \x03(\v2\x1b.security.v1.ControlVersionR\ahistory\"\xbc\x01\n" +
 	"\x14CreateControlRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x1a\n" +
-	"\bquestion\x18\x02 \x01(\tR\bquestion\x12\x16\n" +
-	"\x06answer\x18\x03 \x01(\tR\x06answer\x12\x1a\n" +
-	"\bcategory\x18\x04 \x01(\tR\bcategory\x12\x12\n" +
-	"\x04tags\x18\x05 \x03(\tR\x04tags\x12\x1d\n" +
-	"\n" +
-	"updated_by\x18\x06 \x01(\tR\tupdatedBy\"G\n" +
+	"\bcategory\x18\x02 \x01(\tR\bcategory\x12\x12\n" +
+	"\x04tags\x18\x03 \x03(\tR\x04tags\x12\x1a\n" +
+	"\bquestion\x18\x04 \x01(\tR\bquestion\x12\x16\n" +
+	"\x06answer\x18\x05 \x01(\tR\x06answer\x12*\n" +
+	"\x11unmatched_task_id\x18\x06 \x01(\tR\x0funmatchedTaskId\"G\n" +
 	"\x15CreateControlResponse\x12.\n" +
 	"\acontrol\x18\x01 \x01(\v2\x14.security.v1.ControlR\acontrol\"-\n" +
 	"\x15SearchControlsRequest\x12\x14\n" +
-	"\x05query\x18\x01 \x01(\tR\x05query\"J\n" +
-	"\x16SearchControlsResponse\x120\n" +
-	"\bcontrols\x18\x01 \x03(\v2\x14.security.v1.ControlR\bcontrols\"\x1b\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\"B\n" +
+	"\x16SearchControlsResponse\x12(\n" +
+	"\x04hits\x18\x01 \x03(\v2\x14.security.v1.ControlR\x04hits\"\xbf\x01\n" +
+	"\x14UpdateControlRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\x1a\n" +
+	"\bquestion\x18\x03 \x01(\tR\bquestion\x12\x16\n" +
+	"\x06answer\x18\x04 \x01(\tR\x06answer\x12\x1a\n" +
+	"\bcategory\x18\x05 \x01(\tR\bcategory\x12\x12\n" +
+	"\x04tags\x18\x06 \x03(\tR\x04tags\x12\x1d\n" +
+	"\n" +
+	"updated_by\x18\a \x01(\tR\tupdatedBy\"G\n" +
+	"\x15UpdateControlResponse\x12.\n" +
+	"\acontrol\x18\x01 \x01(\v2\x14.security.v1.ControlR\acontrol\"\x1b\n" +
 	"\x19ListUnmatchedTasksRequest\"N\n" +
 	"\x1aListUnmatchedTasksResponse\x120\n" +
 	"\x05tasks\x18\x01 \x03(\v2\x1a.security.v1.UnmatchedTaskR\x05tasks\"\x17\n" +
 	"\x15ListFeedEventsRequest\"H\n" +
 	"\x16ListFeedEventsResponse\x12.\n" +
-	"\x06events\x18\x01 \x03(\v2\x16.security.v1.FeedEventR\x06events2\xf5\x04\n" +
+	"\x06events\x18\x01 \x03(\v2\x16.security.v1.FeedEventR\x06events\"&\n" +
+	"\x14DeleteControlRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"1\n" +
+	"\x15DeleteControlResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x1a\n" +
+	"\x18GetDashboardStatsRequest\"\x92\x01\n" +
+	"\x19GetDashboardStatsResponse\x12%\n" +
+	"\x0etotal_controls\x18\x01 \x01(\x05R\rtotalControls\x12+\n" +
+	"\x11pending_unmatched\x18\x02 \x01(\x05R\x10pendingUnmatched\x12!\n" +
+	"\fteam_updates\x18\x03 \x01(\x05R\vteamUpdates2\x8d\a\n" +
 	"\x0fSecurityService\x12=\n" +
 	"\x04Ping\x12\x18.security.v1.PingRequest\x1a\x19.security.v1.PingResponse\"\x00\x12U\n" +
 	"\fListControls\x12 .security.v1.ListControlsRequest\x1a!.security.v1.ListControlsResponse\"\x00\x12O\n" +
 	"\n" +
 	"GetControl\x12\x1e.security.v1.GetControlRequest\x1a\x1f.security.v1.GetControlResponse\"\x00\x12X\n" +
-	"\rCreateControl\x12!.security.v1.CreateControlRequest\x1a\".security.v1.CreateControlResponse\"\x00\x12[\n" +
+	"\rCreateControl\x12!.security.v1.CreateControlRequest\x1a\".security.v1.CreateControlResponse\"\x00\x12X\n" +
+	"\rUpdateControl\x12!.security.v1.UpdateControlRequest\x1a\".security.v1.UpdateControlResponse\"\x00\x12X\n" +
+	"\rDeleteControl\x12!.security.v1.DeleteControlRequest\x1a\".security.v1.DeleteControlResponse\"\x00\x12b\n" +
+	"\x11GetDashboardStats\x12%.security.v1.GetDashboardStatsRequest\x1a&.security.v1.GetDashboardStatsResponse\x12[\n" +
 	"\x0eSearchControls\x12\".security.v1.SearchControlsRequest\x1a#.security.v1.SearchControlsResponse\"\x00\x12g\n" +
 	"\x12ListUnmatchedTasks\x12&.security.v1.ListUnmatchedTasksRequest\x1a'.security.v1.ListUnmatchedTasksResponse\"\x00\x12[\n" +
 	"\x0eListFeedEvents\x12\".security.v1.ListFeedEventsRequest\x1a#.security.v1.ListFeedEventsResponse\"\x00BLZJgithub.com/asuka-sakamoto/security-system/gen/proto/security/v1;securityv1b\x06proto3"
@@ -1128,7 +1482,7 @@ func file_proto_security_v1_service_proto_rawDescGZIP() []byte {
 	return file_proto_security_v1_service_proto_rawDescData
 }
 
-var file_proto_security_v1_service_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_proto_security_v1_service_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_proto_security_v1_service_proto_goTypes = []any{
 	(*Control)(nil),                    // 0: security.v1.Control
 	(*ControlVersion)(nil),             // 1: security.v1.ControlVersion
@@ -1144,43 +1498,56 @@ var file_proto_security_v1_service_proto_goTypes = []any{
 	(*CreateControlResponse)(nil),      // 11: security.v1.CreateControlResponse
 	(*SearchControlsRequest)(nil),      // 12: security.v1.SearchControlsRequest
 	(*SearchControlsResponse)(nil),     // 13: security.v1.SearchControlsResponse
-	(*ListUnmatchedTasksRequest)(nil),  // 14: security.v1.ListUnmatchedTasksRequest
-	(*ListUnmatchedTasksResponse)(nil), // 15: security.v1.ListUnmatchedTasksResponse
-	(*ListFeedEventsRequest)(nil),      // 16: security.v1.ListFeedEventsRequest
-	(*ListFeedEventsResponse)(nil),     // 17: security.v1.ListFeedEventsResponse
-	(*timestamppb.Timestamp)(nil),      // 18: google.protobuf.Timestamp
+	(*UpdateControlRequest)(nil),       // 14: security.v1.UpdateControlRequest
+	(*UpdateControlResponse)(nil),      // 15: security.v1.UpdateControlResponse
+	(*ListUnmatchedTasksRequest)(nil),  // 16: security.v1.ListUnmatchedTasksRequest
+	(*ListUnmatchedTasksResponse)(nil), // 17: security.v1.ListUnmatchedTasksResponse
+	(*ListFeedEventsRequest)(nil),      // 18: security.v1.ListFeedEventsRequest
+	(*ListFeedEventsResponse)(nil),     // 19: security.v1.ListFeedEventsResponse
+	(*DeleteControlRequest)(nil),       // 20: security.v1.DeleteControlRequest
+	(*DeleteControlResponse)(nil),      // 21: security.v1.DeleteControlResponse
+	(*GetDashboardStatsRequest)(nil),   // 22: security.v1.GetDashboardStatsRequest
+	(*GetDashboardStatsResponse)(nil),  // 23: security.v1.GetDashboardStatsResponse
+	(*timestamppb.Timestamp)(nil),      // 24: google.protobuf.Timestamp
 }
 var file_proto_security_v1_service_proto_depIdxs = []int32{
-	18, // 0: security.v1.Control.updated_at:type_name -> google.protobuf.Timestamp
-	18, // 1: security.v1.ControlVersion.changed_at:type_name -> google.protobuf.Timestamp
-	18, // 2: security.v1.UnmatchedTask.created_at:type_name -> google.protobuf.Timestamp
-	18, // 3: security.v1.FeedEvent.created_at:type_name -> google.protobuf.Timestamp
+	24, // 0: security.v1.Control.updated_at:type_name -> google.protobuf.Timestamp
+	24, // 1: security.v1.ControlVersion.changed_at:type_name -> google.protobuf.Timestamp
+	24, // 2: security.v1.UnmatchedTask.created_at:type_name -> google.protobuf.Timestamp
+	24, // 3: security.v1.FeedEvent.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 4: security.v1.ListControlsResponse.controls:type_name -> security.v1.Control
 	0,  // 5: security.v1.GetControlResponse.control:type_name -> security.v1.Control
 	1,  // 6: security.v1.GetControlResponse.history:type_name -> security.v1.ControlVersion
 	0,  // 7: security.v1.CreateControlResponse.control:type_name -> security.v1.Control
-	0,  // 8: security.v1.SearchControlsResponse.controls:type_name -> security.v1.Control
-	2,  // 9: security.v1.ListUnmatchedTasksResponse.tasks:type_name -> security.v1.UnmatchedTask
-	3,  // 10: security.v1.ListFeedEventsResponse.events:type_name -> security.v1.FeedEvent
-	4,  // 11: security.v1.SecurityService.Ping:input_type -> security.v1.PingRequest
-	6,  // 12: security.v1.SecurityService.ListControls:input_type -> security.v1.ListControlsRequest
-	8,  // 13: security.v1.SecurityService.GetControl:input_type -> security.v1.GetControlRequest
-	10, // 14: security.v1.SecurityService.CreateControl:input_type -> security.v1.CreateControlRequest
-	12, // 15: security.v1.SecurityService.SearchControls:input_type -> security.v1.SearchControlsRequest
-	14, // 16: security.v1.SecurityService.ListUnmatchedTasks:input_type -> security.v1.ListUnmatchedTasksRequest
-	16, // 17: security.v1.SecurityService.ListFeedEvents:input_type -> security.v1.ListFeedEventsRequest
-	5,  // 18: security.v1.SecurityService.Ping:output_type -> security.v1.PingResponse
-	7,  // 19: security.v1.SecurityService.ListControls:output_type -> security.v1.ListControlsResponse
-	9,  // 20: security.v1.SecurityService.GetControl:output_type -> security.v1.GetControlResponse
-	11, // 21: security.v1.SecurityService.CreateControl:output_type -> security.v1.CreateControlResponse
-	13, // 22: security.v1.SecurityService.SearchControls:output_type -> security.v1.SearchControlsResponse
-	15, // 23: security.v1.SecurityService.ListUnmatchedTasks:output_type -> security.v1.ListUnmatchedTasksResponse
-	17, // 24: security.v1.SecurityService.ListFeedEvents:output_type -> security.v1.ListFeedEventsResponse
-	18, // [18:25] is the sub-list for method output_type
-	11, // [11:18] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	0,  // 8: security.v1.SearchControlsResponse.hits:type_name -> security.v1.Control
+	0,  // 9: security.v1.UpdateControlResponse.control:type_name -> security.v1.Control
+	2,  // 10: security.v1.ListUnmatchedTasksResponse.tasks:type_name -> security.v1.UnmatchedTask
+	3,  // 11: security.v1.ListFeedEventsResponse.events:type_name -> security.v1.FeedEvent
+	4,  // 12: security.v1.SecurityService.Ping:input_type -> security.v1.PingRequest
+	6,  // 13: security.v1.SecurityService.ListControls:input_type -> security.v1.ListControlsRequest
+	8,  // 14: security.v1.SecurityService.GetControl:input_type -> security.v1.GetControlRequest
+	10, // 15: security.v1.SecurityService.CreateControl:input_type -> security.v1.CreateControlRequest
+	14, // 16: security.v1.SecurityService.UpdateControl:input_type -> security.v1.UpdateControlRequest
+	20, // 17: security.v1.SecurityService.DeleteControl:input_type -> security.v1.DeleteControlRequest
+	22, // 18: security.v1.SecurityService.GetDashboardStats:input_type -> security.v1.GetDashboardStatsRequest
+	12, // 19: security.v1.SecurityService.SearchControls:input_type -> security.v1.SearchControlsRequest
+	16, // 20: security.v1.SecurityService.ListUnmatchedTasks:input_type -> security.v1.ListUnmatchedTasksRequest
+	18, // 21: security.v1.SecurityService.ListFeedEvents:input_type -> security.v1.ListFeedEventsRequest
+	5,  // 22: security.v1.SecurityService.Ping:output_type -> security.v1.PingResponse
+	7,  // 23: security.v1.SecurityService.ListControls:output_type -> security.v1.ListControlsResponse
+	9,  // 24: security.v1.SecurityService.GetControl:output_type -> security.v1.GetControlResponse
+	11, // 25: security.v1.SecurityService.CreateControl:output_type -> security.v1.CreateControlResponse
+	15, // 26: security.v1.SecurityService.UpdateControl:output_type -> security.v1.UpdateControlResponse
+	21, // 27: security.v1.SecurityService.DeleteControl:output_type -> security.v1.DeleteControlResponse
+	23, // 28: security.v1.SecurityService.GetDashboardStats:output_type -> security.v1.GetDashboardStatsResponse
+	13, // 29: security.v1.SecurityService.SearchControls:output_type -> security.v1.SearchControlsResponse
+	17, // 30: security.v1.SecurityService.ListUnmatchedTasks:output_type -> security.v1.ListUnmatchedTasksResponse
+	19, // 31: security.v1.SecurityService.ListFeedEvents:output_type -> security.v1.ListFeedEventsResponse
+	22, // [22:32] is the sub-list for method output_type
+	12, // [12:22] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_proto_security_v1_service_proto_init() }
@@ -1194,7 +1561,7 @@ func file_proto_security_v1_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_security_v1_service_proto_rawDesc), len(file_proto_security_v1_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   18,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

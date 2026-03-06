@@ -1,41 +1,99 @@
-import {NextResponse} from 'next/server';
+import { NextResponse } from 'next/server';
 
 export async function GET() {
-    const data = {
-    controls: [
-      {
-        id: 'BASE-0001',
-        title: '多要素認証の実施',
-        category: 'Access Control',
-        tags: ['MFA', '認証', '2FA'],
-        version: 'v5',
-        updatedAt: '2025-03-06T14:30:00Z', // APIのやり取りはISO 8601形式
-        author: '山田',
-        status: 'active'
+  try {
+    const res = await fetch('http://localhost:8080/security.v1.SecurityService/ListControls', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Connect-Protocol-Version': '1',
       },
-      {
-        id: 'BASE-0002',
-        title: 'パスワードポリシー（複雑性・有効期限）',
-        category: 'Access Control',
-        tags: ['パスワード', 'ポリシー'],
-        version: 'v2',
-        updatedAt: '2025-02-15T10:00:00Z',
-        author: '佐藤',
-        status: 'active'
+      body: JSON.stringify({}),
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      // ↓↓↓ ここが超重要！Goからのエラーテキストを読み取ってログに出します ↓↓↓
+      const errorText = await res.text();
+      console.error('[緊急エラー確認] バックエンドからの返答:', errorText);
+      throw new Error(`API request failed with status ${res.status}: ${errorText}`);
+    }
+
+    const data = await res.json();
+    
+    return NextResponse.json({
+      controls: data.controls || [],
+      totalCount: data.controls?.length || 0
+    });
+  } catch (error) {
+    console.error('Error fetching controls:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    try {
+        const body = await request.json();
+        const response = await fetch(`http://localhost:8080/security.v1.SecurityService/UpdateControl`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id: id,
+                title: body.title,
+                category: body.category,
+                question: body.question,
+                answer: body.answer,
+                tags: body.tags || [],
+                updated_by: "system"
+            }),
+            cache: 'no-store'
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[緊急エラー確認] バックエンドからの返答:', errorText);
+            throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+        }
+        const data = await response.json();
+        return NextResponse.json(data);
+    } catch (error) {
+        console.error('Error updating control:', error);
+        return NextResponse.json({ error: 'Failed to update control' }, { status: 500 });
+    }
+}
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    
+    // Goバックエンドの CreateControl メソッドを呼び出す
+    const response = await fetch(`http://localhost:8080/security.v1.SecurityService/CreateControl`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Connect-Protocol-Version': '1',
       },
-      {
-        id: 'BASE-0128',
-        title: 'ゼロトラストアクセス制御',
-        category: 'Network Security',
-        tags: ['ゼロトラスト', 'VPN'],
-        version: 'v1',
-        updatedAt: '2025-03-01T09:00:00Z',
-        author: '鈴木',
-        status: 'active'
-      }
-    ],
-    totalCount: 3
-  };
-  await new Promise(resolve => setTimeout(resolve, 500)); // 疑似的な遅延
-  return NextResponse.json(data);
+      body: JSON.stringify({
+        title: body.title,
+        category: body.category,
+        question: body.question,
+        answer: body.answer,
+        tags: body.tags || [],
+        // created_by や updated_by はバックエンド側で処理される想定
+      }),
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[緊急エラー確認] バックエンドからの返答:', errorText);
+      throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error('Error creating control:', error);
+    return NextResponse.json({ error: 'Failed to create control' }, { status: 500 });
+  }
 }
