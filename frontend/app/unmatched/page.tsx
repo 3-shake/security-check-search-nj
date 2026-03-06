@@ -27,8 +27,33 @@ export default function UnmatchedPage() {
       )}
 
       {isLoading ? (
-        <div className="flex justify-center py-10">
-          <div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm">
+                <th className="p-4 font-semibold w-1/4">ファイル名 (行番号)</th>
+                <th className="p-4 font-semibold w-1/2">質問内容</th>
+                <th className="p-4 font-semibold w-1/4">アクション</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {[...Array(5)].map((_, i) => (
+                <tr key={i}>
+                  <td className="p-4">
+                    <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-1" />
+                    <div className="h-3 w-12 bg-gray-100 rounded animate-pulse" />
+                  </td>
+                  <td className="p-4">
+                    <div className="h-4 w-full bg-gray-200 rounded animate-pulse mb-1" />
+                    <div className="h-4 w-2/3 bg-gray-200 rounded animate-pulse" />
+                  </td>
+                  <td className="p-4">
+                    <div className="h-8 w-28 bg-gray-200 rounded animate-pulse" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : tasks.length === 0 && !error ? (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-10 text-center text-gray-500">

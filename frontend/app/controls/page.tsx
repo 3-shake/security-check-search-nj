@@ -31,16 +31,59 @@ export default function ControlsListPage() {
         </div>
       )}
 
-      {/* メインコンテンツ（ローディング or 一覧） */}
+      {/* メインコンテンツ（ローディング or 空状態 or 一覧） */}
       {isLoading ? (
-        <div className="flex justify-center py-20">
-          <div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+        /* ローディング（スケルトン） */
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200 text-sm">
+            <thead className="bg-slate-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left font-semibold text-gray-600">ID / タイトル</th>
+                <th scope="col" className="px-6 py-3 text-left font-semibold text-gray-600">カテゴリ</th>
+                <th scope="col" className="px-6 py-3 text-left font-semibold text-gray-600">タグ</th>
+                <th scope="col" className="px-6 py-3 text-left font-semibold text-gray-600">版</th>
+                <th scope="col" className="px-6 py-3 text-left font-semibold text-gray-600">最終更新</th>
+                <th scope="col" className="px-6 py-3 text-center font-semibold text-gray-600">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 bg-white">
+              {[...Array(6)].map((_, i) => (
+                <tr key={i}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="h-4 w-20 bg-gray-200 rounded animate-pulse mb-2" />
+                    <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex gap-1">
+                      <div className="h-5 w-14 bg-gray-200 rounded-full animate-pulse" />
+                      <div className="h-5 w-14 bg-gray-200 rounded-full animate-pulse" />
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="h-5 w-10 bg-gray-200 rounded-full animate-pulse" />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-1" />
+                    <div className="h-3 w-16 bg-gray-100 rounded animate-pulse" />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <div className="h-4 w-20 bg-gray-200 rounded animate-pulse mx-auto" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : controls.length === 0 && !error ? (
+        /* 空状態 */
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center text-gray-500">
           登録されているナレッジがありません。
         </div>
       ) : (
+        /* データ一覧 */
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -59,16 +102,16 @@ export default function ControlsListPage() {
                   <td className="p-4">
                     <div className="font-bold text-gray-900 mb-1">{control.title}</div>
                     <div className="flex flex-wrap gap-2 text-xs">
-  {/* whitespace-nowrap を付けて、単語の途中で縦に改行されるのを防ぐ */}
-  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200 whitespace-nowrap">
-    {control.category}
-  </span>
-  {control.tags?.map(tag => (
-    <span key={tag} className="text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 whitespace-nowrap">
-      #{tag}
-    </span>
-  ))}
-</div>
+                      {/* whitespace-nowrap を付けて、単語の途中で縦に改行されるのを防ぐ */}
+                      <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200 whitespace-nowrap">
+                        {control.category}
+                      </span>
+                      {control.tags?.map(tag => (
+                        <span key={tag} className="text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 whitespace-nowrap">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
                   </td>
                   <td className="p-4 text-sm text-gray-600 hidden md:table-cell">
                     <p className="line-clamp-2">{control.question || control.answer}</p>

@@ -29,6 +29,7 @@ type Querier interface {
 	GetControlsByIDs(ctx context.Context, dollar_1 []string) ([]GetControlsByIDsRow, error)
 	LinkControlTag(ctx context.Context, arg LinkControlTagParams) error
 	ListControls(ctx context.Context) ([]ListControlsRow, error)
+	ListControlsPaginated(ctx context.Context, arg ListControlsPaginatedParams) ([]ListControlsPaginatedRow, error)
 	ListFeedEvents(ctx context.Context) ([]ListFeedEventsRow, error)
 	ListPendingUnmatchedTasks(ctx context.Context, arg ListPendingUnmatchedTasksParams) ([]UnmatchedTask, error)
 	SearchControls(ctx context.Context, dollar_1 pgtype.Text) ([]SearchControlsRow, error)

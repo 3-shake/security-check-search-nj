@@ -27,6 +27,7 @@ export default function SearchPage() {
           placeholder="キーワードを入力 (例: 認証, MFA)"
           className="w-full border border-gray-300 rounded-lg px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 pr-12"
         />
+        {/* 入力欄内のミニスピナー（検索中であることを入力欄でも視覚的に示す） */}
         {isSearching && (
           <div className="absolute right-4 top-3.5">
             <div className="animate-spin h-5 w-5 border-2 border-blue-500 rounded-full border-t-transparent"></div>
@@ -34,21 +35,46 @@ export default function SearchPage() {
         )}
       </div>
 
+      {/* エラー表示 */}
       {error && (
         <div className="p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg mt-4">
           <p className="font-bold text-sm">検索エラー: {error.message}</p>
         </div>
       )}
 
-      {/* 検索結果エリア */}
-      {debouncedQuery && !error && (
-        <div className="mt-8 transition-opacity duration-300" style={{ opacity: isSearching ? 0.5 : 1 }}>
+      {/* 検索中スケルトン（エラーがない場合のみ表示） */}
+      {debouncedQuery && isSearching && !error && (
+        <div className="mt-8 space-y-4">
+          <div className="h-5 w-48 bg-gray-200 rounded animate-pulse mb-4" />
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="h-5 w-16 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-5 w-48 bg-gray-200 rounded animate-pulse" />
+                </div>
+                <div className="h-4 w-20 bg-gray-100 rounded animate-pulse" />
+              </div>
+              <div className="h-4 w-full bg-gray-200 rounded animate-pulse mb-2" />
+              <div className="h-4 w-2/3 bg-gray-200 rounded animate-pulse mb-3" />
+              <div className="flex gap-2">
+                <div className="h-5 w-16 bg-gray-200 rounded animate-pulse" />
+                <div className="h-5 w-14 bg-gray-200 rounded animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 検索結果エリア（検索が完了し、エラーがない場合のみ表示） */}
+      {debouncedQuery && !isSearching && !error && (
+        <div className="mt-8">
           <p className="text-gray-600 mb-4 font-medium">
-            「{debouncedQuery}」の検索結果: {data.total} 件
+            「{debouncedQuery}」の検索結果: {data?.total || 0} 件
           </p>
 
-          {/* items ではなく controls (useSearchフックで設定した名前) を参照 */}
-          {data.controls && data.controls.length > 0 ? (
+          {/* items ではなく controls を参照 */}
+          {data?.controls && data.controls.length > 0 ? (
             <div className="space-y-4">
               {data.controls.map((item) => (
                 <Link 
@@ -87,11 +113,10 @@ export default function SearchPage() {
               ))}
             </div>
           ) : (
-            !isSearching && (
-              <div className="bg-gray-50 border border-gray-200 p-8 rounded-lg text-center">
-                <p className="text-gray-500">一致するナレッジが見つかりませんでした。</p>
-              </div>
-            )
+            <div className="bg-gray-50 border border-gray-200 p-8 rounded-lg text-center">
+              <p className="text-gray-500">一致するナレッジが見つかりませんでした。</p>
+              <p className="text-sm text-gray-400 mt-2">別のキーワード（例: 認証）でお試しください。</p>
+            </div>
           )}
         </div>
       )}
