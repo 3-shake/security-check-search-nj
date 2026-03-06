@@ -1,107 +1,37 @@
-"use client"; // ← ブラウザで動かすための宣言
+"use client";
 
 import Link from "next/link";
-import { use, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
-// APIから返ってくるデータの型定義
-type Control = {
-  id: string;
-  title: string;
-  category: string;
-  tags: string[];
-  version: string;
-  status: string;
-  question: string;
-  answer: string;
-};
+import { use } from "react";
+import { useControlDetail } from "../../../hooks/useControlDetail";
 
 export default function ControlsDetailPage({ params }: { params: Promise<{ id: string }> }) {
-    const router = useRouter();
-  // Next.js 15の仕様に合わせ、paramsをuse()で展開
+  // Next.js 15の仕様に合わせ、paramsをuse()で展開してIDを取得
   const { id: controlId } = use(params);
 
-  // 状態（State）の管理
-  const [control, setControl] = useState<Control | null>(null); // DBのデータ
-  const [isEditing, setIsEditing] = useState(false);            // 編集モードかどうか
-  const [formData, setFormData] = useState<Partial<Control>>({}); // フォームの入力内容
-  const [isLoading, setIsLoading] = useState(true);
-  const [tagInput, setTagInput] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  // 1. 初回マウント時にDBから本物のデータを取得 (GET)
-  useEffect(() => {
-    const fetchControl = async () => {
-      try {
-        const res = await fetch(`/api/controls/${controlId}`);
-        if (!res.ok) throw new Error("データの取得に失敗しました");
-        const data = await res.json();
-        // GoのAPIは { control: {...} } という形で返してきます
-        setControl(data.control);
-        setFormData(data.control);
-        setTagInput(data.control.tags ? data.control.tags.join(", ") : ""); 
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchControl();
-  }, [controlId]);
-
-  // 2. 保存ボタンを押したときの処理 (PUT)
-  const handleSave = async () => {
-    try {
-      const res = await fetch(`/api/controls/${controlId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: formData.title,
-          category: formData.category,
-          question: formData.question,
-          answer: formData.answer,
-          tags: tagInput.split(",").map(t => t.trim()).filter(Boolean),
-        }),
-      });
-
-      if (!res.ok) throw new Error("更新に失敗しました");
-
-      const updatedData = await res.json();
-      setControl(updatedData.control); // 画面のデータを最新化
-      setIsEditing(false); // 閲覧モードに戻す
-      toast.success("更新が完了しました！ (バージョンが上がりました)");
-    } catch (error) {
-      console.error(error);
-      alert("エラーが発生しました");
-    }
-  };
-  const handleDelete = async () => {
-    if (!window.confirm("本当にこのControlを削除しますか？この操作は取り消せません。")) {
-      return;
-    }
-
-    setIsDeleting(true);
-    try {
-      const { id } = await params;
-      const res = await fetch(`/api/controls/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) throw new Error("削除に失敗しました");
-
-      toast.success("削除しました。");
-      router.push("/controls"); // 削除後は一覧画面へ戻る
-      router.refresh(); // 最新の一覧を取得
-    } catch (error) {
-      console.error(error);
-      toast.error("エラーが発生しました。");
-      setIsDeleting(false);
-    }
-  };
+  // カスタムフックから必要な状態と関数をすべて受け取る
+  const {
+    control,
+    isEditing,
+    setIsEditing,
+    formData,
+    setFormData,
+    tagInput,
+    setTagInput,
+    isLoading,
+    isDeleting,
+    error,
+    handleSave,
+    handleDelete,
+  } = useControlDetail(controlId);
 
   // 読み込み中・エラー時の表示
-  if (isLoading) return <div className="text-center mt-10 text-gray-500">読み込み中...</div>;
-  if (!control) return <div className="text-center mt-10 text-red-500">データが見つかりません</div>;
+  if (isLoading) return (
+    <div className="flex justify-center mt-20">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    </div>
+  );
+  if (error) return <div className="text-center mt-10 text-red-500 font-bold">{error.message}</div>;
+  if (!control) return <div className="text-center mt-10 text-gray-500">データが見つかりません</div>;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-20">
@@ -138,7 +68,7 @@ export default function ControlsDetailPage({ params }: { params: Promise<{ id: s
             )}
           </div>
 
-          {/* 編集・保存ボタンの切り替え */}
+          {/* 編集・保存・削除ボタン */}
           {isEditing ? (
             <div className="flex gap-2">
               <button 
@@ -155,20 +85,17 @@ export default function ControlsDetailPage({ params }: { params: Promise<{ id: s
               </button>
             </div>
           ) : (
-            
             <div className="flex gap-2">
               <button 
                 onClick={() => { setIsEditing(true); setTagInput(control.tags ? control.tags.join(", ") : ""); }}
-                className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded shadow-sm hover:bg-gray-50 text-sm font-medium transition-colors box-border"
+                className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded shadow-sm hover:bg-gray-50 text-sm font-medium transition-colors"
               >
                 編集する
               </button>
-              
               <button 
                 onClick={handleDelete}
                 disabled={isDeleting}
-                
-                className="bg-red-500 border border-transparent text-white px-4 py-2 rounded shadow-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50 text-sm box-border"
+                className="bg-red-500 border border-transparent text-white px-4 py-2 rounded shadow-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50 text-sm"
               >
                 {isDeleting ? "削除中..." : "削除する"}
               </button>
@@ -176,6 +103,7 @@ export default function ControlsDetailPage({ params }: { params: Promise<{ id: s
           )}
         </div>
 
+        {/* メタ情報 (カテゴリ、タグ、バージョン) */}
         <div className="flex flex-wrap gap-4 text-sm text-gray-600 border-t pt-4">
           <div className="flex items-center gap-2">
             <span className="text-gray-400">カテゴリ:</span>
@@ -203,7 +131,7 @@ export default function ControlsDetailPage({ params }: { params: Promise<{ id: s
         </div>
       </div>
 
-      {/* ナレッジ内容 */}
+      {/* ナレッジ内容 (代表質問と回答) */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-6">
         <div>
           <h3 className="text-sm font-bold text-gray-500 mb-2">代表的な質問 (CSVからの抽出)</h3>

@@ -1,32 +1,33 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { SecurityService } from "../gen/proto/security/v1/service_pb";
-// Protoから自動生成された型をインポート
-import type { FeedEvent } from "../gen/proto/security/v1/service_pb";
+// Protoから生成された本物の型をインポート
+import type { UnmatchedTask } from "../gen/proto/security/v1/service_pb";
 
-export const useFeed = () => {
-  const [feed, setFeed] = useState<FeedEvent[]>([]);
+export const useUnmatched = () => {
+  const [tasks, setTasks] = useState<UnmatchedTask[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const fetchFeed = async () => {
+    const fetchTasks = async () => {
       setIsLoading(true);
       setError(null);
       
       try {
         // Connect RPC クライアントの初期化
         const transport = createConnectTransport({
-          baseUrl: 'http://localhost:8080',
+          baseUrl: "http://localhost:8080",
         });
         const client = createClient(SecurityService, transport);
 
-        // 直接バックエンドの関数を呼び出す！
-        const res = await client.listFeedEvents({});
+        // ListUnmatchedTasks APIを直接呼び出す
+        const res = await client.listUnmatchedTasks({});
         
-        setFeed(res.events || []);
+        setTasks(res.tasks || []);
       } catch (err) {
+        console.error("Failed to fetch unmatched tasks", err);
         if (err instanceof Error) {
           setError(err);
         } else {
@@ -37,8 +38,8 @@ export const useFeed = () => {
       }
     };
 
-    fetchFeed();
+    fetchTasks();
   }, []);
 
-  return { feed, isLoading, error };
+  return { tasks, isLoading, error };
 };

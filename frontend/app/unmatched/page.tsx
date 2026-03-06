@@ -1,35 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-
-type UnmatchedTask = {
-  id: string;
-  originalFileName: string;
-  rowNumber: number;
-  questionText: string;
-  status: string;
-};
+// ★ 先ほど作ったカスタムフックをインポート
+import { useUnmatched } from "../../hooks/useUnmatched";
 
 export default function UnmatchedPage() {
-  const [tasks, setTasks] = useState<UnmatchedTask[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const res = await fetch("/api/unmatched");
-        const data = await res.json();
-        setTasks(data.tasks);
-      } catch (error) {
-        console.error("Failed to fetch unmatched tasks", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTasks();
-  }, []);
+  // ★ fetchの代わりにフックを呼び出すだけ！超スッキリ！
+  const { tasks, isLoading, error } = useUnmatched();
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -41,6 +18,13 @@ export default function UnmatchedPage() {
           </p>
         </div>
       </div>
+
+      {/* エラー時の表示を追加 */}
+      {error && (
+        <div className="p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg">
+          <p className="font-bold text-sm">エラーが発生しました: {error.message}</p>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -71,7 +55,7 @@ export default function UnmatchedPage() {
             </tbody>
           </table>
         </div>
-      ) : tasks.length === 0 ? (
+      ) : tasks.length === 0 && !error ? (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-10 text-center text-gray-500">
           現在、未回答の新しい質問はありません。
         </div>
@@ -99,9 +83,9 @@ export default function UnmatchedPage() {
                   </td>
                   <td className="p-4">
                     <Link
-  href={`/controls/new?question=${encodeURIComponent(task.questionText)}&taskId=${task.id}`}
-  className="inline-block px-4 py-2 bg-blue-100 text-blue-700 text-sm font-semibold rounded hover:bg-blue-200 transition-colors"
->
+                      href={`/controls/new?question=${encodeURIComponent(task.questionText)}&taskId=${task.id}`}
+                      className="inline-block px-4 py-2 bg-blue-100 text-blue-700 text-sm font-semibold rounded hover:bg-blue-200 transition-colors"
+                    >
                       回答を作成する
                     </Link>
                   </td>
