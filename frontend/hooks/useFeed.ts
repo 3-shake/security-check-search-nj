@@ -1,35 +1,37 @@
 import { useState, useEffect } from 'react';
-
-// API Route (/api/feed) が返す JSON の型定義
-export type FeedEventJSON = {
-  id: number;
-  eventType: string;
-  controlId: string;
-  userName: string;
-  createdAt: string;
-  description: string;
-  controlTitle: string;
-};
+import { createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
+import { SecurityService } from "../gen/proto/security/v1/service_pb";
+// Protoから自動生成された型をインポート
+import type { FeedEvent } from "../gen/proto/security/v1/service_pb";
 
 export const useFeed = () => {
-  const [feed, setFeed] = useState<FeedEventJSON[]>([]);
-  const [loading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [feed, setFeed] = useState<FeedEvent[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const fetchFeed = async () => {
       setIsLoading(true);
       setError(null);
+      
       try {
-        const res = await fetch('/api/feed');
-        if (!res.ok) {
-          throw new Error('Failed to fetch feed');
+        // Connect RPC クライアントの初期化
+        const transport = createConnectTransport({
+          baseUrl: 'http://localhost:8080',
+        });
+        const client = createClient(SecurityService, transport);
+
+        // 直接バックエンドの関数を呼び出す！
+        const res = await client.listFeedEvents({});
+        
+        setFeed(res.events || []);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err);
+        } else {
+          setError(new Error(String(err)));
         }
-        const data = await res.json();
-        setFeed(data.events ?? []);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        setError(message);
       } finally {
         setIsLoading(false);
       }
@@ -38,5 +40,5 @@ export const useFeed = () => {
     fetchFeed();
   }, []);
 
-  return { feed, loading, error };
+  return { feed, isLoading, error };
 };

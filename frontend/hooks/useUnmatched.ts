@@ -1,13 +1,9 @@
 import { useState, useEffect } from "react";
-
-// 型定義
-export type UnmatchedTask = {
-  id: string;
-  originalFileName: string;
-  rowNumber: number;
-  questionText: string;
-  status: string;
-};
+import { createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
+import { SecurityService } from "../gen/proto/security/v1/service_pb";
+// Protoから生成された本物の型をインポート
+import type { UnmatchedTask } from "../gen/proto/security/v1/service_pb";
 
 export const useUnmatched = () => {
   const [tasks, setTasks] = useState<UnmatchedTask[]>([]);
@@ -20,12 +16,16 @@ export const useUnmatched = () => {
       setError(null);
       
       try {
-        const res = await fetch("/api/unmatched");
-        if (!res.ok) {
-          throw new Error("未マッチタスクの取得に失敗しました");
-        }
-        const data = await res.json();
-        setTasks(data.tasks || []);
+        // Connect RPC クライアントの初期化
+        const transport = createConnectTransport({
+          baseUrl: "http://localhost:8080",
+        });
+        const client = createClient(SecurityService, transport);
+
+        // ListUnmatchedTasks APIを直接呼び出す
+        const res = await client.listUnmatchedTasks({});
+        
+        setTasks(res.tasks || []);
       } catch (err) {
         console.error("Failed to fetch unmatched tasks", err);
         if (err instanceof Error) {

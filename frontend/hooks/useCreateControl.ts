@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
+import { SecurityService } from "../gen/proto/security/v1/service_pb";
 
 type CreateControlForm = {
   title: string;
@@ -57,22 +60,22 @@ export const useCreateControl = () => {
       .filter((tag) => tag !== '');
 
     try {
-      const res = await fetch('/api/controls', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: form.title,
-          category: form.category,
-          tags: tagsArray,
-          question: form.question,
-          answer: form.answer,
-          unmatchedTaskId: taskId,
-        }),
+      // Connect RPC クライアントの初期化
+      const transport = createConnectTransport({
+        baseUrl: 'http://localhost:8080',
       });
+      const client = createClient(SecurityService, transport);
 
-      if (!res.ok) {
-        throw new Error('Failed to save control');
-      }
+      // 直接バックエンドの createControl を呼び出す
+      await client.createControl({
+        title: form.title,
+        category: form.category,
+        tags: tagsArray,
+        question: form.question,
+        answer: form.answer,
+        // Protocol Buffersのstring型はnullを許容しないことが多いので、空文字を渡します
+        unmatchedTaskId: taskId || "", 
+      });
 
       toast.success('新しいControlを作成しました！');
       router.push('/controls');

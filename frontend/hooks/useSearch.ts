@@ -1,30 +1,22 @@
 import { useState, useEffect } from "react";
 import { useDebounce } from "use-debounce";
+import { createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
+import { SecurityService } from "../gen/proto/security/v1/service_pb";
 
-// 型定義
-export type SearchResult = {
-  id: string;
-  title: string;
-  category: string;
-  tags: string[];
-  matchSnippet: string;
-  updatedAt: string;
-};
+import type { Control } from "../gen/proto/security/v1/service_pb";
 
 export const useSearch = () => {
   const [inputValue, setInputValue] = useState("");
-  // 入力遅延用のフック
   const [debouncedQuery] = useDebounce(inputValue, 500);
 
-  const [data, setData] = useState({ total: 0, items: [] as SearchResult[] });
+  const [data, setData] = useState({ total: 0, controls: [] as Control[] });
   const [isSearching, setIsSearching] = useState(false);
-  
- 
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (!debouncedQuery) {
-      setData({ total: 0, items: [] });
+      setData({ total: 0, controls: [] });
       setIsSearching(false);
       setError(null);
       return;
@@ -35,15 +27,21 @@ export const useSearch = () => {
       setError(null);
       
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(debouncedQuery)}`);
-        if (!res.ok) {
-          throw new Error("検索に失敗しました");
-        }
-        const result = await res.json();
-        setData(result);
+        // Connect RPC クライアントの初期化
+        const transport = createConnectTransport({
+          baseUrl: "http://localhost:8080",
+        });
+        const client = createClient(SecurityService, transport);
+
+        // searchControls APIを直接呼び出す
+        const res = await client.searchControls({ query: debouncedQuery });
+        const fetchedHits = res.hits || [];
+        setData({
+          total: fetchedHits.length || 0,
+          controls: fetchedHits || [],
+        });
       } catch (err) {
         console.error("検索エラー:", err);
-        // ★ エラーを Error オブジェクトとして保存します
         if (err instanceof Error) {
           setError(err);
         } else {
@@ -57,7 +55,6 @@ export const useSearch = () => {
     fetchResults();
   }, [debouncedQuery]);
 
-  // ★ ここで debouncedQuery と error をしっかり返します
   return {
     inputValue,
     setInputValue,
