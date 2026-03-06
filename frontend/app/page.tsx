@@ -59,13 +59,13 @@ export default function DashboardPage() {
                 {activity.description}
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                {activity.createdAt
-                  ? timestampDate(activity.createdAt).toLocaleString('ja-JP')
+                {activity.createdAt 
+                  ? timestampDate(activity.createdAt).toLocaleString('ja-JP') 
                   : ''}
               </p>
             </li>
           ))}
-
+                
           {activities.length === 0 && (
             <p className="text-gray-500">最近のアクティビティはありません。</p>
           )}
