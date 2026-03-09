@@ -1,0 +1,44 @@
+# ==========================================
+# 1. ビルド用ステージ（重い環境でビルドする）
+# ==========================================
+FROM golang:1.25-bookworm AS builder
+
+WORKDIR /app
+
+# Go Workspace の設定ファイル群をコピー
+COPY go.work go.work.sum ./
+COPY backend/go.mod backend/go.sum ./backend/
+COPY gen/go.mod gen/go.sum ./gen/
+
+# 依存パッケージのダウンロード
+RUN cd backend && go mod download
+RUN cd gen && go mod download
+
+# ソースコード全体をコピー
+COPY backend/ ./backend/
+COPY gen/ ./gen/
+
+# 完全な静的バイナリとしてビルド（CGO_ENABLED=0 が Distroless で動かすための鍵）
+WORKDIR /app/backend
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /server ./cmd/server/main.go
+
+# ==========================================
+# 2. 実行用ステージ（Distrolessで軽く・安全に動かす）
+# ==========================================
+FROM gcr.io/distroless/static-debian12
+
+WORKDIR /
+
+# ビルド用ステージで作った実行ファイルだけをコピー
+COPY --from=builder /server /server
+
+# root権限を持たない安全なユーザーで実行
+USER nonroot:nonroot
+
+EXPOSE 8080
+
+ENTRYPOINT ["/server"]
+
+
+
+
