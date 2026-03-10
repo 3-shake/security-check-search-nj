@@ -11,6 +11,40 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countControls = `-- name: CountControls :one
+SELECT COUNT(*) FROM controls
+`
+
+func (q *Queries) CountControls(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countControls)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countPendingUnmatchedTasks = `-- name: CountPendingUnmatchedTasks :one
+SELECT COUNT(*) FROM unmatched_tasks WHERE status = 'pending'
+`
+
+func (q *Queries) CountPendingUnmatchedTasks(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countPendingUnmatchedTasks)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countRecentTeamUpdates = `-- name: CountRecentTeamUpdates :one
+SELECT COUNT(*) FROM feed_events 
+WHERE created_at >= NOW() - INTERVAL '7 days'
+`
+
+func (q *Queries) CountRecentTeamUpdates(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countRecentTeamUpdates)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createControl = `-- name: CreateControl :one
 INSERT INTO controls (
   id, title, question, answer, category, status, version
@@ -55,6 +89,53 @@ func (q *Queries) CreateControl(ctx context.Context, arg CreateControlParams) (C
 	return i, err
 }
 
+const createControlVersion = `-- name: CreateControlVersion :one
+INSERT INTO control_versions (
+    control_id, version, title, category, tags, question, answer, created_by
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8
+) RETURNING id, control_id, version, title, category, tags, question, answer, created_by, created_at
+`
+
+type CreateControlVersionParams struct {
+	ControlID pgtype.Text `json:"control_id"`
+	Version   int32       `json:"version"`
+	Title     string      `json:"title"`
+	Category  string      `json:"category"`
+	Tags      []byte      `json:"tags"`
+	Question  string      `json:"question"`
+	Answer    string      `json:"answer"`
+	CreatedBy pgtype.Text `json:"created_by"`
+}
+
+// 変更前のスナップショットを履歴として保存するためのクエリです
+func (q *Queries) CreateControlVersion(ctx context.Context, arg CreateControlVersionParams) (ControlVersion, error) {
+	row := q.db.QueryRow(ctx, createControlVersion,
+		arg.ControlID,
+		arg.Version,
+		arg.Title,
+		arg.Category,
+		arg.Tags,
+		arg.Question,
+		arg.Answer,
+		arg.CreatedBy,
+	)
+	var i ControlVersion
+	err := row.Scan(
+		&i.ID,
+		&i.ControlID,
+		&i.Version,
+		&i.Title,
+		&i.Category,
+		&i.Tags,
+		&i.Question,
+		&i.Answer,
+		&i.CreatedBy,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const deleteControl = `-- name: DeleteControl :exec
 DELETE FROM controls
 WHERE id = $1
@@ -62,6 +143,17 @@ WHERE id = $1
 
 func (q *Queries) DeleteControl(ctx context.Context, id string) error {
 	_, err := q.db.Exec(ctx, deleteControl, id)
+	return err
+}
+
+const deleteControlTags = `-- name: DeleteControlTags :exec
+DELETE FROM control_tags 
+WHERE control_id = $1
+`
+
+// 更新時に一度古いタグの紐付けを全てリセットするためのクエリです
+func (q *Queries) DeleteControlTags(ctx context.Context, controlID string) error {
+	_, err := q.db.Exec(ctx, deleteControlTags, controlID)
 	return err
 }
 
@@ -117,6 +209,57 @@ func (q *Queries) GetControl(ctx context.Context, id string) (GetControlRow, err
 	return i, err
 }
 
+const getControlsByIDs = `-- name: GetControlsByIDs :many
+SELECT 
+    c.id, c.title, c.category, c.question, c.answer, c.status, c.version,
+    COALESCE(array_agg(t.name) FILTER (WHERE t.name IS NOT NULL), '{}')::varchar[] AS tags
+FROM controls c
+LEFT JOIN control_tags ct ON c.id = ct.control_id
+LEFT JOIN tags t ON ct.tag_id = t.id
+WHERE c.id = ANY($1::text[])
+GROUP BY c.id
+`
+
+type GetControlsByIDsRow struct {
+	ID       string   `json:"id"`
+	Title    string   `json:"title"`
+	Category string   `json:"category"`
+	Question string   `json:"question"`
+	Answer   string   `json:"answer"`
+	Status   string   `json:"status"`
+	Version  int32    `json:"version"`
+	Tags     []string `json:"tags"`
+}
+
+func (q *Queries) GetControlsByIDs(ctx context.Context, dollar_1 []string) ([]GetControlsByIDsRow, error) {
+	rows, err := q.db.Query(ctx, getControlsByIDs, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetControlsByIDsRow
+	for rows.Next() {
+		var i GetControlsByIDsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Category,
+			&i.Question,
+			&i.Answer,
+			&i.Status,
+			&i.Version,
+			&i.Tags,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const linkControlTag = `-- name: LinkControlTag :exec
 INSERT INTO control_tags (control_id, tag_id) 
 VALUES ($1, $2) 
@@ -134,15 +277,15 @@ func (q *Queries) LinkControlTag(ctx context.Context, arg LinkControlTagParams) 
 }
 
 const listControls = `-- name: ListControls :many
-SELECT 
-    c.id, 
-    c.title, 
-    c.category, 
-    c.question, 
-    c.answer, 
-    c.status, 
-    c.version, 
-    c.created_at, 
+SELECT
+    c.id,
+    c.title,
+    c.category,
+    c.question,
+    c.answer,
+    c.status,
+    c.version,
+    c.created_at,
     c.updated_at,
     COALESCE(array_agg(t.name) FILTER (WHERE t.name IS NOT NULL), '{}')::varchar[] AS tags
 FROM controls c
@@ -174,6 +317,75 @@ func (q *Queries) ListControls(ctx context.Context) ([]ListControlsRow, error) {
 	var items []ListControlsRow
 	for rows.Next() {
 		var i ListControlsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Category,
+			&i.Question,
+			&i.Answer,
+			&i.Status,
+			&i.Version,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Tags,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listControlsPaginated = `-- name: ListControlsPaginated :many
+SELECT
+    c.id,
+    c.title,
+    c.category,
+    c.question,
+    c.answer,
+    c.status,
+    c.version,
+    c.created_at,
+    c.updated_at,
+    COALESCE(array_agg(t.name) FILTER (WHERE t.name IS NOT NULL), '{}')::varchar[] AS tags
+FROM controls c
+LEFT JOIN control_tags ct ON c.id = ct.control_id
+LEFT JOIN tags t ON ct.tag_id = t.id
+GROUP BY c.id
+ORDER BY c.updated_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListControlsPaginatedParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type ListControlsPaginatedRow struct {
+	ID        string             `json:"id"`
+	Title     string             `json:"title"`
+	Category  string             `json:"category"`
+	Question  string             `json:"question"`
+	Answer    string             `json:"answer"`
+	Status    string             `json:"status"`
+	Version   int32              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	Tags      []string           `json:"tags"`
+}
+
+func (q *Queries) ListControlsPaginated(ctx context.Context, arg ListControlsPaginatedParams) ([]ListControlsPaginatedRow, error) {
+	rows, err := q.db.Query(ctx, listControlsPaginated, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListControlsPaginatedRow
+	for rows.Next() {
+		var i ListControlsPaginatedRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Title,

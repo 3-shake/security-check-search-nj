@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    container_name: security-check-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: security_check
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d security_check"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. マイグレーション実行コンテナ
+  migrate:
+    image: migrate/migrate:v4.17.0
+    container_name: security-check-migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend/db/migrations:/migrations
+    command:
+      - -path=/migrations
+      - -database=postgres://postgres:password@db:5432/security_check?sslmode=disable
+      - up
+
+  # 3. バックエンド（Go）コンテナ - マイグレーションが成功した後に起動するようdepends_onで指定
+  backend:
+    build:
+      context: . # go.work を読み込めるようにプロジェクトルートをコンテキストにする
+      dockerfile: backend/Dockerfile
+    container_name: security-check-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # DBコンテナへの接続情報（localhostではなく「db」というサービス名で繋ぐ）
+      - DATABASE_URL=postgres://postgres:password@db:5432/security_check?sslmode=disable
+      - PORT=8080
+    depends_on:
+      migrate:
+        # マイグレーション（テーブル作成）が成功した後にバックエンドを起動する
+        condition: service_completed_successfully
+
+# 4. フロントエンド（Next.js）コンテナ ← ★新規追加！
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: security-check-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      # SSR（サーバー側）通信用：Docker内のネットワークでバックエンドを探すため「backend」を指定
+      - API_URL=http://backend:8080
+      # ブラウザ側通信用：ユーザーのPCからアクセスするため「localhost」を指定
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    depends_on:
+      backend:
+        condition: service_started
+
+volumes:
+  pgdata:
