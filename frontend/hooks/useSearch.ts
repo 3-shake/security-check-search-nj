@@ -29,7 +29,7 @@ export const useSearch = () => {
       try {
         // Connect RPC クライアントの初期化
         const transport = createConnectTransport({
-          baseUrl: "http://localhost:8080",
+          baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
         });
         const client = createClient(SecurityService, transport);
 

@@ -1,4 +1,9 @@
 terraform {
+    required_version = ">= 1.0"
+    backend "gcs" {
+    bucket = "welcome-study-sakamoto-tfstate"
+    prefix = "terraform/state"
+  }
   required_providers {
     google = {
         source = "hashicorp/google"
@@ -105,4 +110,29 @@ output "artifact_registry_url" {
 output "cloud_sql_connection_name" {
   value       = google_sql_database_instance.main.connection_name
   description = "Cloud SQL Auth Proxy等で接続する際に使うコネクション名"
+}
+
+resource "google_container_cluster" "primary" {
+    name     = "security-check-gke-cluster"
+    location = var.region
+    
+    # シングルノードの小規模クラスター（開発用）
+    remove_default_node_pool = true
+    initial_node_count = 1
+    
+    deletion_protection = false
+
+}
+resource "google_container_node_pool" "primary_nodes" {
+    name = "security-check-node-pool"
+    location = var.region
+    cluster = google_container_cluster.primary.name
+    node_count = 1
+    node_config {
+        preemptible = true
+        machine_type = "e2-small"
+        oauth_scopes = [
+            "https://www.googleapis.com/auth/cloud-platform"
+        ]
+    }
 }

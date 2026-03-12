@@ -355,18 +355,25 @@ func main() {
 	mux := http.NewServeMux()
 	pathName, handler := securityv1connect.NewSecurityServiceHandler(securityServer)
 	mux.Handle(pathName, handler)
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		// "200 OK" と "ok" という文字を返すだけの簡単な受付
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
 
 	go startPubSubListener("welcome-study-sakamoto", "ingestion-subscription", pool, index)
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:3000"},
-		AllowedMethods: []string{"POST", "OPTIONS"},
+		// 開発を優先させるなら一旦 "*" (すべて許可) にするのが確実です
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"POST", "OPTIONS", "GET"},
 		AllowedHeaders: []string{"Content-Type", "Connect-Protocol-Version"},
 	})
 
-	fmt.Printf(" Server is running on http://localhost:8080\n")
 	// Connect RPCのために h2c.NewHandler を適用
-	if err := http.ListenAndServe(":8080", c.Handler(h2c.NewHandler(mux, &http2.Server{}))); err != nil {
+	addr := "0.0.0.0:8080"
+	fmt.Printf(" Server is running on http://%s\n", addr)
+	if err := http.ListenAndServe(addr, c.Handler(h2c.NewHandler(mux, &http2.Server{}))); err != nil {
 		fmt.Printf("Failed to start server: %v\n", err)
 	}
 }

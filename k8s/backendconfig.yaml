@@ -1,0 +1,8 @@
+# k8s/backendconfig.yaml
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: my-security-config
+spec:
+  securityPolicy:
+    name: "allow-my-ip" # さっき gcloud で作ったポリシー名

@@ -27,8 +27,6 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /server ./cmd/server/main.
 # ==========================================
 FROM gcr.io/distroless/static-debian12
 
-WORKDIR /
-
 # ビルド用ステージで作った実行ファイルだけをコピー
 COPY --from=builder /server /server
 
@@ -37,8 +35,12 @@ USER nonroot:nonroot
 
 EXPOSE 8080
 
-ENTRYPOINT ["/server"]
+# 実行時のカレントディレクトリを /tmp に変更
+# （これだけで、アプリは書き込み可能な /tmp 内に controls.bleve を作ります）
+WORKDIR /tmp
 
+# 実行コマンド
+ENTRYPOINT ["/server"]
 
 
 

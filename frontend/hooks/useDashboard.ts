@@ -7,7 +7,7 @@ import type { FeedEvent } from '../gen/proto/security/v1/service_pb';
 
 // transport/client をモジュール外部で一度だけ作成（毎レンダー再生成を防止）
 const transport = createConnectTransport({
-  baseUrl: 'http://localhost:8080',
+  baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
 });
 const client = createClient(SecurityService, transport);
 
